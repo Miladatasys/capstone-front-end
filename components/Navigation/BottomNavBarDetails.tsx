@@ -1,49 +1,65 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, usePathname, useLocalSearchParams } from 'expo-router';
 
 const BottomNavBarDetails: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname(); // Obtiene la ruta actual
   const { barId } = useLocalSearchParams(); // Para acceder al `barId` si es necesario
-  const [selectedTab, setSelectedTab] = useState<string>('orders');
 
-  const handlePress = (tab: string, route: string) => {
-    setSelectedTab(tab);
-    router.push(route);
+  // Determina qué pestaña está activa según la ruta actual
+  const getTabColor = (tabRoutes: string[]) => {
+    return tabRoutes.some((tabRoute) => pathname.includes(tabRoute)) ? '#EF233C' : '#747272';
+  };
+
+  const getTextStyle = (tabRoutes: string[]) => {
+    return tabRoutes.some((tabRoute) => pathname.includes(tabRoute)) ? styles.selectedIconText : styles.iconText;
   };
 
   return (
     <View style={styles.container}>
       {/* Botón de Inicio */}
-      <TouchableOpacity onPress={() => handlePress('home', '/client/recommendations/RecommendationsScreen')}>
+      <TouchableOpacity onPress={() => router.push('/client/recommendations/RecommendationsScreen')}>
         <View style={styles.iconContainer}>
-          <Ionicons name="home-outline" size={24} color={selectedTab === 'home' ? '#EF233C' : '#E4E5E1'} />
-          <Text style={[styles.iconText, selectedTab === 'home' && styles.selectedIconText]}>Inicio</Text>
+          <Ionicons name="home-outline" size={24} color={getTabColor(['/client/recommendations'])} />
+          <Text style={getTextStyle(['/client/recommendations'])}>Inicio</Text>
         </View>
       </TouchableOpacity>
 
       {/* Botón de Pedidos */}
-      <TouchableOpacity onPress={() => handlePress('orders', '/client/orders')}>
+      <TouchableOpacity onPress={() => router.push('/client/bar-details')}>
         <View style={styles.iconContainer}>
-          <Ionicons name="basket-outline" size={24} color={selectedTab === 'orders' ? '#EF233C' : '#E4E5E1'} />
-          <Text style={[styles.iconText, selectedTab === 'orders' && styles.selectedIconText]}>Pedidos</Text>
+          <Ionicons
+            name="basket-outline"
+            size={24}
+            color={getTabColor(['/client/bar-details', '/client/orders'])}
+          />
+          <Text style={getTextStyle(['/client/bar-details', '/client/orders'])}>Pedidos</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Botón de Escanear */}
+      <TouchableOpacity onPress={() => router.push('/client/scan')}>
+        <View style={styles.iconContainer}>
+          <Ionicons name="qr-code-outline" size={24} color={getTabColor(['/client/scan'])} />
+          <Text style={getTextStyle(['/client/scan'])}>Escanear</Text>
         </View>
       </TouchableOpacity>
 
       {/* Botón de Historial de Pedidos */}
-      <TouchableOpacity onPress={() => handlePress('history', `/client/bar-details/${barId}/OrdersHistoryScreen`)}>
+      <TouchableOpacity onPress={() => router.push(`/client/bar-details/${barId}/OrdersHistoryScreen`)}>
         <View style={styles.iconContainer}>
-          <Ionicons name="time-outline" size={24} color={selectedTab === 'history' ? '#EF233C' : '#E4E5E1'} />
-          <Text style={[styles.iconText, selectedTab === 'history' && styles.selectedIconText]}>Historial</Text>
+          <Ionicons name="time-outline" size={24} color={getTabColor([`/client/bar-details/${barId}/OrdersHistoryScreen`])} />
+          <Text style={getTextStyle([`/client/bar-details/${barId}/OrdersHistoryScreen`])}>Historial</Text>
         </View>
       </TouchableOpacity>
 
       {/* Botón de Mi Cuenta */}
-      <TouchableOpacity onPress={() => handlePress('account', '/client/account')}>
+      <TouchableOpacity onPress={() => router.push('/client/account/AccountSettingsScreen')}>
         <View style={styles.iconContainer}>
-          <Ionicons name="person-outline" size={24} color={selectedTab === 'account' ? '#EF233C' : '#E4E5E1'} />
-          <Text style={[styles.iconText, selectedTab === 'account' && styles.selectedIconText]}>Mi Cuenta</Text>
+          <Ionicons name="person-outline" size={24} color={getTabColor(['/client/account'])} />
+          <Text style={getTextStyle(['/client/account'])}>Mi Cuenta</Text>
         </View>
       </TouchableOpacity>
     </View>
@@ -67,7 +83,7 @@ const styles = StyleSheet.create({
   },
   iconText: {
     fontSize: 12,
-    color: '#E4E5E1',
+    color: '#747272',
   },
   selectedIconText: {
     color: '#EF233C',

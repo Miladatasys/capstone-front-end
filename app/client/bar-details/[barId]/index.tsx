@@ -26,34 +26,33 @@ const BarDetailsScreen: React.FC = () => {
     });
   }, []);
 
-  // En updateQuantity
-  const updateQuantity = (productId: string, increment: boolean) => {
-    setQuantities((prevQuantities) => {
-      const updatedQuantity = increment
-        ? prevQuantities[productId] + 1
-        : Math.max(prevQuantities[productId] - 1, 0);
+// En updateQuantity
+const updateQuantity = (productId: string, increment: boolean) => {
+  setQuantities((prevQuantities) => {
+    const updatedQuantity = increment
+      ? prevQuantities[productId] + 1
+      : Math.max(prevQuantities[productId] - 1, 0);
 
-      if (updatedQuantity === 0 && !increment) {
-        Toast.show({
-          type: 'info',
-          text1: 'Cantidad mínima alcanzada',
-          text2: `No se pueden reducir más los artículos de ${products.find((item) => item.id === productId)?.name}.`,
-          position: 'bottom',
-        });
-      }
+    if (updatedQuantity === 0 && !increment) {
+      Toast.show({
+        type: 'info',
+        text1: 'Cantidad mínima alcanzada',
+        text2: `No se pueden reducir más los artículos de ${products.find((item) => item.id === productId).name}.`,
+        position: 'bottom',
+      });
+    }
 
-      const product = products.find((item) => item.id === productId);
-      if (product) {
-        const priceDifference = (updatedQuantity - prevQuantities[productId]) * product.price;
-        setTotal((prevTotal) => prevTotal + priceDifference);
-      }
+    const product = products.find((item) => item.id === productId);
+    const priceDifference = (updatedQuantity - prevQuantities[productId]) * product.price;
+    setTotal((prevTotal) => prevTotal + priceDifference);
 
-      return {
-        ...prevQuantities,
-        [productId]: updatedQuantity,
-      };
-    });
-  };
+    return {
+      ...prevQuantities,
+      [productId]: updatedQuantity,
+    };
+  });
+};
+
 
   const handlePayPress = () => {
     const selectedProducts = products.filter(product => quantities[product.id] > 0).map(product => ({
@@ -78,6 +77,7 @@ const BarDetailsScreen: React.FC = () => {
       });
     }
   };
+  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -98,7 +98,7 @@ const BarDetailsScreen: React.FC = () => {
                   <Text style={styles.quantityButtonText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.quantity}>
-                  {quantities[item.id]?.toLocaleString('en-US', { minimumIntegerDigits: 2 })}
+                  {quantities[item.id].toLocaleString('en-US', { minimumIntegerDigits: 2 })}
                 </Text>
                 <TouchableOpacity
                   style={styles.quantityButton}
@@ -132,6 +132,7 @@ const BarDetailsScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   payButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#EF233C',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,

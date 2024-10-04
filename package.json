@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@types/react": "~18.2.79",
-    "expo": "~51.0.35",
+    "expo": "~51.0.36",
     "expo-constants": "~16.0.2",
     "expo-linking": "~6.3.1",
     "expo-router": "~3.5.23",

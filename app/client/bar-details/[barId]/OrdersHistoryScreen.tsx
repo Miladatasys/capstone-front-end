@@ -36,9 +36,11 @@ const OrdersHistoryScreen: React.FC = () => {
   }, [barId]);
 
   const handleSelectOrder = (orderId: string) => {
-    // Podríamos mostrar más detalles del pedido seleccionado
-    console.log(`Pedido seleccionado: ${orderId}`);
-    // Aquí podríamos redirigir a una pantalla de detalles específicos del pedido si lo deseamos
+    // Redirigir a la pantalla de detalles del pedido
+    router.push({
+      pathname: `/client/bar-details/${barId}/OrderDetailScreen`,
+      params: { orderId },
+    });
   };
 
   return (

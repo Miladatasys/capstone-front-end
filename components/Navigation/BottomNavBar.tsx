@@ -26,13 +26,13 @@ const BottomNavBar: React.FC = () => {
         </View>
       </TouchableOpacity>
 
-      {/* Botón de Escanear */}
       <TouchableOpacity onPress={() => router.push('/client/scan')}>
         <View style={styles.iconContainer}>
           <Ionicons name="qr-code-outline" size={24} color={getTabColor('/client/scan')} />
           <Text style={getTextStyle('/client/scan')}>Escanear</Text>
         </View>
       </TouchableOpacity>
+
 
       {/* Botón de Mi Cuenta */}
       <TouchableOpacity onPress={() => router.push('/client/account/AccountSettingsScreen')}>

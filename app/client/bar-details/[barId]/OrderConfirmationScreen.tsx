@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Toast from 'react-native-toast-message';
 
 const OrderConfirmationScreen: React.FC = () => {
   const router = useRouter();
@@ -11,38 +10,6 @@ const OrderConfirmationScreen: React.FC = () => {
   const handleGoHome = () => {
     router.push('/client/recommendations/RecommendationsScreen');
   };
-
-  // Lógica para simular la confirmación de pedido y notificar al usuario
-  // Aquí se realizaría la integración real con el backend
-  React.useEffect(() => {
-    // Simulamos una llamada al backend para confirmar el pedido
-    Toast.show({
-      type: 'success',
-      text1: 'Pedido Confirmado',
-      text2: 'Tu pedido ha sido registrado y está siendo procesado.',
-      position: 'top',
-    });
-
-    // Comentario para la integración con el backend:
-    // Cuando el usuario llega a esta pantalla, deberíamos realizar una solicitud POST al backend para confirmar el pedido.
-    // axios.post('https://mi-backend.com/api/orders/confirm', {
-    //     paymentMethod: paymentMethod, // Enviar el método de pago seleccionado
-    //   })
-    //   .then(response => {
-    //     console.log('Pedido confirmado:', response.data);
-    //     // Podemos guardar el estado del pedido o mostrar más detalles al usuario si es necesario
-    //   })
-    //   .catch(error => {
-    //     console.error('Error al confirmar el pedido:', error);
-    //     // Mostrar un mensaje de error al usuario si hay problemas con la confirmación del pedido
-    //     Toast.show({
-    //       type: 'error',
-    //       text1: 'Error',
-    //       text2: 'Hubo un problema al confirmar tu pedido. Por favor, inténtalo de nuevo.',
-    //       position: 'bottom',
-    //     });
-    //   });
-  }, [paymentMethod]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,9 +24,6 @@ const OrderConfirmationScreen: React.FC = () => {
       <TouchableOpacity style={styles.homeButton} onPress={handleGoHome}>
         <Text style={styles.homeButtonText}>Volver a Inicio</Text>
       </TouchableOpacity>
-
-      {/* Mostrar Toast */}
-      <Toast />
     </SafeAreaView>
   );
 };

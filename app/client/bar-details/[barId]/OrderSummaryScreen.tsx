@@ -67,18 +67,39 @@ const OrderSummaryScreen: React.FC = () => {
       });
       return;
     }
-  
+
     // Mostrar Toast y cambiar el estado de procesamiento
     Toast.show({
       type: 'success',
       text1: 'Pedido Confirmado',
-      text2: 'Por favor selecciona tu método de pago...',
+      text2: 'Tu pago está siendo procesado...',
     });
-  
-    // Redirigir al usuario a la pantalla de selección de método de pago
-    router.push('/client/bar-details/[barId]/PaymentMethodScreen');
+
+    setIsProcessingPayment(true);
+
+    // Simulamos el proceso de pago con un retraso de 3 segundos
+    setTimeout(() => {
+      setIsProcessingPayment(false);
+      router.push('/client/bar-details/[barId]/OrderConfirmationScreen');
+    }, 3000);
+
+    // Comentario para la integración con el backend:
+    // Aquí deberíamos hacer una solicitud POST al backend para confirmar el pedido.
+    // Ejemplo:
+    // axios.post('https://mi-backend.com/api/orders', { products })
+    //   .then(response => {
+    //     console.log('Pedido registrado:', response.data);
+    //     router.push('/client/bar-details/[barId]/OrderConfirmationScreen');
+    //   })
+    //   .catch(error => {
+    //     setIsProcessingPayment(false);
+    //     Toast.show({
+    //       type: 'error',
+    //       text1: 'Error al procesar el pedido',
+    //       text2: 'Hubo un problema al confirmar tu pedido. Inténtalo nuevamente.',
+    //     });
+    //   });
   };
-  
 
   return (
     <SafeAreaView style={styles.container}>

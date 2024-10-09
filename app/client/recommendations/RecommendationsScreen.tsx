@@ -20,9 +20,10 @@ const RecommendationsScreen: React.FC = () => {
   }, []);
 
   const onSelectBar = (barId: string) => {
-    router.push(`/client/bar-details/${barId}`);  
-    console.log("Navegando a bar:", barId);
+    router.push(`/client/scan?barId=${barId}`);
+    console.log("Navegando a escanear código QR para bar:", barId);
   };
+  
   
   
 

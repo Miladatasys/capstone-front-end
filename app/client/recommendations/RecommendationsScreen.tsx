@@ -1,3 +1,4 @@
+// File: client/recommendations/RecommendationsScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, SafeAreaView, Text } from 'react-native';
 import SearchBar from '../../../components/CustomInput/SearchBar';
@@ -20,12 +21,10 @@ const RecommendationsScreen: React.FC = () => {
   }, []);
 
   const onSelectBar = (barId: string) => {
+    // Navega al escáner y pasa el barId como parámetro
     router.push(`/client/scan?barId=${barId}`);
     console.log("Navegando a escanear código QR para bar:", barId);
   };
-  
-  
-  
 
   return (
     <SafeAreaView style={styles.container}>

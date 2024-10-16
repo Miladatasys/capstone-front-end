@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet, ScrollView } from 'react-native';
+import { View, Image, StyleSheet, ScrollView, Text, Pressable } from 'react-native';
 import { useRouter } from "expo-router";
 import Toast from 'react-native-toast-message';
 import Logo from '../../../assets/images/Logo_2.png';
@@ -34,25 +34,28 @@ const ClientSignInScreen: React.FC = () => {
     router.push("/client/auth/ClientSignUpScreen");
   };
 
+  const onBarSignInPressed = () => {
+    // Navegar a la pantalla de login para el usuario bar
+    router.push("/bar/auth/BarSignInScreen");
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
       <View style={styles.root}>
         <Image source={Logo} style={styles.logo} resizeMode="contain" />
 
-        {/* Cambio de setValue a setvalue */}
         <ClientCustomInput
           placeholder="Nombre de Usuario"
           value={username}
-          setvalue={setUsername} // Cambiar a `setvalue` según lo esperado por el componente
+          setvalue={setUsername}
         />
         <ClientCustomInput
           placeholder="Contraseña"
           value={password}
-          setvalue={setPassword} // Cambiar a `setvalue` según lo esperado por el componente
+          setvalue={setPassword}
           secureTextEntry={true}
         />
 
-        {/* Eliminando la propiedad style, ya que no está definida en el componente */}
         <ClientCustomButton
           text="Iniciar Sesión"
           onPress={onClientSignInPressed}
@@ -70,6 +73,11 @@ const ClientSignInScreen: React.FC = () => {
           type="SECONDARY"
         />
       </View>
+
+      {/* Botón minimalista para iniciar como Bar */}
+      <Pressable onPress={onBarSignInPressed} style={styles.barSignInButton}>
+        <Text style={styles.barSignInText}>Iniciar como Bar</Text>
+      </Pressable>
 
       {/* Mostrar Toast para toda la pantalla */}
       <Toast />
@@ -94,6 +102,15 @@ const styles = StyleSheet.create({
     maxWidth: 250,
     maxHeight: 180,
     marginBottom: 30,
+  },
+  barSignInButton: {
+    alignSelf: 'center',
+    marginTop: 20,
+  },
+  barSignInText: {
+    color: '#888',
+    fontSize: 17,
+    textDecorationLine: 'underline',
   },
 });
 

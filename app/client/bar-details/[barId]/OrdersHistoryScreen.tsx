@@ -17,15 +17,23 @@ const OrdersHistoryScreen: React.FC = () => {
 
   useEffect(() => {
     // Datos simulados mientras no esté disponible el backend
-    setOrders([
+    const simulatedOrders = [
       { id: '1', barId: '1', date: '2024-09-29', total: 15000, status: 'Completado' },
       { id: '2', barId: '1', date: '2024-09-25', total: 10000, status: 'Cancelado' },
       { id: '3', barId: '1', date: '2024-09-20', total: 12000, status: 'En preparación' },
-    ]);
+    ];
+  
+    setOrders(simulatedOrders);
+  
+    console.log('Orders:', simulatedOrders);  // <-- Esto es para verificar que los datos están siendo cargados
+  }, [barId]);
+  
+  console.log('Bar ID:', barId);  // <-- Verifica si el barId está correcto
+
 
     // TODO: Integración con el backend
     /*
-    axios.get(`https://mi-backend.com/api/orders/history?barId=${barId}`)
+    axios.get(https://mi-backend.com/api/orders/history?barId=${barId})
       .then(response => {
         setOrders(response.data.orders);
       })
@@ -33,7 +41,6 @@ const OrdersHistoryScreen: React.FC = () => {
         console.error('Error al obtener el historial de pedidos:', error);
       });
     */
-  }, [barId]);
 
   const handleSelectOrder = (orderId: string) => {
     // Redirigir a la pantalla de detalles del pedido
@@ -47,20 +54,21 @@ const OrdersHistoryScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Historial de Pedidos</Text>
       <FlatList
-        data={orders.filter(order => order.barId === barId)} // Filtra por el bar actual
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.orderCard}
-            onPress={() => handleSelectOrder(item.id)}
-          >
-            <Text style={styles.orderDate}>Fecha: {item.date}</Text>
-            <Text style={styles.orderTotal}>Total: ${item.total.toLocaleString()}</Text>
-            <Text style={styles.orderStatus}>Estado: {item.status}</Text>
-          </TouchableOpacity>
-        )}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-      />
+  data={orders}  // Muestra todos los pedidos sin filtrar
+  renderItem={({ item }) => (
+    <TouchableOpacity
+      style={styles.orderCard}
+      onPress={() => handleSelectOrder(item.id)}
+    >
+      <Text style={styles.orderDate}>Fecha: {item.date}</Text>
+      <Text style={styles.orderTotal}>Total: ${item.total.toLocaleString()}</Text>
+      <Text style={styles.orderStatus}>Estado: {item.status}</Text>
+    </TouchableOpacity>
+  )}
+  keyExtractor={(item) => item.id}
+  contentContainerStyle={styles.list}
+/>
+
     </SafeAreaView>
   );
 };

@@ -72,33 +72,16 @@ const OrderSummaryScreen: React.FC = () => {
     Toast.show({
       type: 'success',
       text1: 'Pedido Confirmado',
-      text2: 'Tu pago está siendo procesado...',
+      text2: 'Redirigiendo a método de pago...',
     });
 
     setIsProcessingPayment(true);
 
-    // Simulamos el proceso de pago con un retraso de 3 segundos
+    // Redirigimos a la pantalla de método de pago en lugar de confirmar directamente el pedido
     setTimeout(() => {
       setIsProcessingPayment(false);
-      router.push('/client/bar-details/[barId]/OrderConfirmationScreen');
+      router.push(`/client/bar-details/[barId]/PaymentMethodScreen`);
     }, 3000);
-
-    // Comentario para la integración con el backend:
-    // Aquí deberíamos hacer una solicitud POST al backend para confirmar el pedido.
-    // Ejemplo:
-    // axios.post('https://mi-backend.com/api/orders', { products })
-    //   .then(response => {
-    //     console.log('Pedido registrado:', response.data);
-    //     router.push('/client/bar-details/[barId]/OrderConfirmationScreen');
-    //   })
-    //   .catch(error => {
-    //     setIsProcessingPayment(false);
-    //     Toast.show({
-    //       type: 'error',
-    //       text1: 'Error al procesar el pedido',
-    //       text2: 'Hubo un problema al confirmar tu pedido. Inténtalo nuevamente.',
-    //     });
-    //   });
   };
 
   return (
@@ -108,7 +91,7 @@ const OrderSummaryScreen: React.FC = () => {
       {isProcessingPayment ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#EF233C" />
-          <Text style={styles.loadingText}>Procesando tu pago...</Text>
+          <Text style={styles.loadingText}>Redirigiendo a método de pago...</Text>
         </View>
       ) : (
         <>
@@ -135,7 +118,7 @@ const OrderSummaryScreen: React.FC = () => {
               style={({ pressed }) => [styles.confirmButton, pressed && styles.confirmButtonPressed]}
               onPress={handleConfirmPayment}
             >
-              <Text style={styles.confirmButtonText}>Confirmar y Pagar</Text>
+              <Text style={styles.confirmButtonText}>Confirmar y Proceder al Pago</Text>
             </Pressable>
           </View>
         </>

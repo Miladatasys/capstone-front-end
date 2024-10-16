@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import BottomNavBarDetails from '../../../../components/Navigation/BottomNavBarDetails';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
+  const { barId, tableNumber } = useLocalSearchParams(); // Ahora obtenemos el `tableNumber`
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
@@ -26,33 +27,22 @@ const BarDetailsScreen: React.FC = () => {
     });
   }, []);
 
-// En updateQuantity
-const updateQuantity = (productId: string, increment: boolean) => {
-  setQuantities((prevQuantities) => {
-    const updatedQuantity = increment
-      ? prevQuantities[productId] + 1
-      : Math.max(prevQuantities[productId] - 1, 0);
+  const updateQuantity = (productId: string, increment: boolean) => {
+    setQuantities((prevQuantities) => {
+      const updatedQuantity = increment
+        ? prevQuantities[productId] + 1
+        : Math.max(prevQuantities[productId] - 1, 0);
 
-    if (updatedQuantity === 0 && !increment) {
-      Toast.show({
-        type: 'info',
-        text1: 'Cantidad mínima alcanzada',
-        text2: `No se pueden reducir más los artículos de ${products.find((item) => item.id === productId).name}.`,
-        position: 'bottom',
-      });
-    }
+      const product = products.find((item) => item.id === productId);
+      const priceDifference = (updatedQuantity - prevQuantities[productId]) * product.price;
+      setTotal((prevTotal) => prevTotal + priceDifference);
 
-    const product = products.find((item) => item.id === productId);
-    const priceDifference = (updatedQuantity - prevQuantities[productId]) * product.price;
-    setTotal((prevTotal) => prevTotal + priceDifference);
-
-    return {
-      ...prevQuantities,
-      [productId]: updatedQuantity,
-    };
-  });
-};
-
+      return {
+        ...prevQuantities,
+        [productId]: updatedQuantity,
+      };
+    });
+  };
 
   const handlePayPress = () => {
     const selectedProducts = products.filter(product => quantities[product.id] > 0).map(product => ({
@@ -61,14 +51,12 @@ const updateQuantity = (productId: string, increment: boolean) => {
     }));
   
     if (selectedProducts.length > 0) {
-      // Convertir `selectedProducts` a una cadena JSON antes de pasarlo a `params`
       const productsString = JSON.stringify(selectedProducts);
       router.push({
-        pathname: `/client/bar-details/[barId]/OrderSummaryScreen`,
+        pathname: `/client/bar-details/${barId}/OrderSummaryScreen`,
         params: { products: productsString },
       });
     } else {
-      // Mostramos un Toast en vez de usar console.warn
       Toast.show({
         type: 'info',
         text1: 'No hay productos seleccionados',
@@ -77,11 +65,13 @@ const updateQuantity = (productId: string, increment: boolean) => {
       });
     }
   };
-  
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Productos del Bar</Text>
+      <Text style={styles.title}>Productos del Bar (ID del Bar: {barId})</Text>
+      {/* Mostrando el número de mesa en la interfaz */}
+      <Text style={styles.tableNumberText}>Número de Mesa: {tableNumber}</Text>
+
       <FlatList
         data={products}
         renderItem={({ item }) => (
@@ -133,18 +123,23 @@ const updateQuantity = (productId: string, increment: boolean) => {
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  // Define todas las propiedades que vas a usar en el código
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     margin: 20,
     color: '#2B2D42',
+  },
+  tableNumberText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 20,
+    color: '#EF233C',
+    marginBottom: 10, // Espacio extra para separarlo del título
   },
   list: {
     paddingBottom: 100,
@@ -155,11 +150,8 @@ const styles = StyleSheet.create({
     margin: 10,
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
+    borderColor: '#ddd',
+    borderWidth: 1,
   },
   productImage: {
     width: 80,
@@ -237,6 +229,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
 
 export default BarDetailsScreen;

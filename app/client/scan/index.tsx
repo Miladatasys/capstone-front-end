@@ -1,7 +1,7 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState, useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import SuccessToast from '../../../components/Bar/SuccessToast/SuccessToast';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,9 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 export default function ClientScanScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
-  const [scanned, setScanned] = useState(false);
+  const [scanned, setScanned] = useState(false); // Para controlar si ya se ha escaneado
   const [scannedData, setScannedData] = useState(null);
   const router = useRouter();
+  const { barId } = useLocalSearchParams(); // Obtiene el barId desde los parámetros de la URL
 
   useEffect(() => {
     if (!permission) {
@@ -35,37 +36,43 @@ export default function ClientScanScreen() {
   }
 
   const handleBarcodeScanned = ({ data }) => {
-    setScanned(true);
-  
-    const barId = processBarCodeData(data);
-    
-    if (!barId) {
+    // Verificar si ya se ha escaneado
+    if (scanned) return;
+
+    setScanned(true); // Evitar más escaneos
+    console.log("Datos escaneados:", data); // Verifica qué estás escaneando
+
+    const tableNumber = processBarCodeData(data);
+
+    if (!tableNumber) {
       Toast.show({
         type: 'error',
         text1: 'Error al escanear',
         text2: 'No se pudo procesar el código QR. Inténtalo de nuevo.',
       });
-      setScanned(false);
+      setScanned(false); // Permitir escanear de nuevo
       return;
     }
 
-    setScannedData(barId);
+    setScannedData(tableNumber);
 
+    // Redirigir al bar con el ID y la mesa escaneada
     setTimeout(() => {
-      router.push(`/client/bar-details/${barId}`);
-    }, 2000);
+      router.push(`/client/bar-details/${barId}?tableNumber=${tableNumber}`);
+    }, 2000); // Redirige después de 2 segundos
   };
 
   function processBarCodeData(data) {
     try {
       const url = new URL(data);
-      const barId = url.searchParams.get('barId');
-      if (barId) return barId;
+      const tableNumber = url.searchParams.get('tableId'); // Cambié a 'tableId' en lugar de 'tableNumber'
+      if (tableNumber) return tableNumber;
 
+      // Si no contiene tableNumber, toma la última parte de la ruta
       const pathParts = url.pathname.split('/');
-      const potentialBarId = pathParts[pathParts.length - 1]; 
-      return potentialBarId;
+      return pathParts[pathParts.length - 1]; 
     } catch (error) {
+      // Si no es un URL, devuelve los datos crudos (texto plano del QR)
       return data;
     }
   }
@@ -80,7 +87,7 @@ export default function ClientScanScreen() {
         <CameraView
           style={StyleSheet.absoluteFillObject}
           facing={facing}
-          onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+          onBarcodeScanned={handleBarcodeScanned} // Desactivado si ya escaneó
         >
           <View style={styles.cameraOverlay}>
             <TouchableOpacity style={styles.cameraButton} onPress={toggleCameraFacing}>
@@ -92,7 +99,7 @@ export default function ClientScanScreen() {
 
       {scannedData && (
         <View style={styles.dataContainer}>
-          <Text style={styles.dataTitle}>Datos escaneados:</Text>
+          <Text style={styles.dataTitle}>Número de Mesa:</Text>
           <Text style={styles.dataText}>{scannedData}</Text>
         </View>
       )}
@@ -176,8 +183,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: '#E4E5E1',
     borderWidth: 1,
-    alignItems: 'flex-start', // Alinea el texto a la izquierda
-    alignSelf: 'flex-start', // Mantiene el contenedor alineado a la izquierda
+    alignItems: 'flex-start',
+    alignSelf: 'flex-start',
   },
   dataTitle: {
     fontSize: 18,

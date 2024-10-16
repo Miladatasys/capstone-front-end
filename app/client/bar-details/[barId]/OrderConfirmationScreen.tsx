@@ -8,7 +8,7 @@ const OrderConfirmationScreen: React.FC = () => {
 
   // Lógica para volver a la pantalla principal
   const handleGoHome = () => {
-    router.push('/client/recommendations/RecommendationsScreen');
+    router.push('/client/bar-details/index');
   };
 
   return (

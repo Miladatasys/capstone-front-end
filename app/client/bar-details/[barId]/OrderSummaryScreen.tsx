@@ -74,7 +74,6 @@ const OrderSummaryScreen: React.FC = () => {
       text1: 'Pedido Confirmado',
       text2: 'Redirigiendo a método de pago...',
     });
-
     setIsProcessingPayment(true);
 
     // Redirigimos a la pantalla de método de pago en lugar de confirmar directamente el pedido

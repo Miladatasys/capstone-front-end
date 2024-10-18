@@ -1,21 +1,48 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import Toast from 'react-native-toast-message';
 
 const OrderConfirmationScreen: React.FC = () => {
   const router = useRouter();
-  const { paymentMethod } = useLocalSearchParams();
+  const { paymentMethod, barId, total } = useLocalSearchParams();
 
-  // Lógica para volver a la pantalla principal
+  // Lógica para volver a la pantalla principal y confirmar el pedido
   const handleGoHome = () => {
-    router.push('/client/bar-details/index');
+    // Aquí comentarías la integración con axios hasta que el backend esté listo
+    /*
+    axios.post('https://tu-backend.com/api/orders/confirm', {
+      paymentMethod: paymentMethod || 'Desconocido',
+      id_mesa: barId, // ID de la mesa
+      total: total, // Total del pedido
+      // Otros campos que podrían ser necesarios
+      // id_cliente: clienteId, // Si tienes autenticación en el app
+      // detalles_pedido: productos, // Si tienes los productos del pedido
+    })
+    .then(response => {
+      console.log('Pedido confirmado:', response.data);
+      // Redirigir a la pantalla de confirmación del pedido exitoso
+      router.push(`/client/bar-details/${barId}/OrderConfirmationScreen`);
+    })
+    .catch(error => {
+      console.error('Error al confirmar el pedido:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo confirmar tu pedido. Inténtalo nuevamente.',
+      });
+    });
+    */
+    
+    // Por ahora, simplemente navegas de regreso a la pantalla de inicio
+    router.push(`/client/bar-details/index`);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>¡Gracias por tu Pedido!</Text>
       <Text style={styles.message}>
-        Tu pedido ha sido confirmado y se está procesando.{' '}
+        Tu pedido ha sido confirmado y se está procesando.
       </Text>
       <Text style={styles.paymentDetails}>
         Método de Pago: {paymentMethod ? paymentMethod : 'Desconocido'}

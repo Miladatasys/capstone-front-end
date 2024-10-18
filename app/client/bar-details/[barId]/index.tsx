@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import BottomNavBarDetails from '../../../../components/Navigation/BottomNavBarDetails';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import NotificationIcon from '../../../../components/Notification/NotificationIcon'; // Importar el nuevo componente
+import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
+// import axios from 'axios'; // Descomentar cuando esté listo el backend
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
-  const { barId, tableNumber } = useLocalSearchParams(); // Ahora obtenemos el `tableNumber`
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
+  const [hasNotification, setHasNotification] = useState(false); // Estado para manejar las notificaciones
 
   useEffect(() => {
+    // Simulación de notificación por producto no disponible
+    setTimeout(() => {
+      setHasNotification(true); // Mostrar la notificación después de 5 segundos (simulación)
+    }, 5000);
+
     // Datos simulados mientras no esté disponible el backend
     setProducts([
       { id: '1', name: 'Cerveza Artesanal', price: 3500, image: 'https://via.placeholder.com/80' },
@@ -25,6 +32,26 @@ const BarDetailsScreen: React.FC = () => {
       '2': 0,
       '3': 0,
     });
+
+    // Aquí es donde llamaría al backend para obtener los productos disponibles de un bar
+    /*
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get(`URL_DEL_BACKEND/api/bar/${barId}/products`);
+        setProducts(response.data); // Actualiza los productos con los datos del backend
+        // Inicializar cantidades de productos
+        const initialQuantities = {};
+        response.data.forEach((product) => {
+          initialQuantities[product.id] = 0;
+        });
+        setQuantities(initialQuantities);
+      } catch (error) {
+        console.error('Error fetching products from backend:', error);
+      }
+    };
+
+    fetchProducts(); // Llama a la función cuando el componente se monta
+    */
   }, []);
 
   const updateQuantity = (productId: string, increment: boolean) => {
@@ -52,8 +79,36 @@ const BarDetailsScreen: React.FC = () => {
   
     if (selectedProducts.length > 0) {
       const productsString = JSON.stringify(selectedProducts);
+
+      // En esta parte puedo enviar los productos seleccionados al backend
+      /*
+      const sendOrder = async () => {
+        try {
+          await axios.post(`URL_DEL_BACKEND/api/orders`, {
+            barId,
+            tableNumber,  // Asegúrate de tener el número de mesa disponible
+            products: selectedProducts,
+          });
+          router.push({
+            pathname: `/client/bar-details/[barId]/OrderSummaryScreen`,
+            params: { products: productsString },
+          });
+        } catch (error) {
+          console.error('Error al enviar la orden al backend:', error);
+          Toast.show({
+            type: 'error',
+            text1: 'Error al realizar el pedido',
+            text2: 'No se pudo enviar el pedido, por favor intenta nuevamente.',
+            position: 'bottom',
+          });
+        }
+      };
+
+      sendOrder(); // Llama a la función para enviar la orden
+      */
+      
       router.push({
-        pathname: `/client/bar-details/${barId}/OrderSummaryScreen`,
+        pathname: `/client/bar-details/[barId]/OrderSummaryScreen`,
         params: { products: productsString },
       });
     } else {
@@ -66,12 +121,36 @@ const BarDetailsScreen: React.FC = () => {
     }
   };
 
+  const handleNotificationPress = () => {
+    setHasNotification(false); // Desactivar la notificación después de presionarla
+
+    // Aquí es donde llamaría al backend para actualizar el estado del pedido cuando el cliente gestiona un ítem no disponible
+    /*
+    const updateUnavailableItem = async () => {
+      try {
+        await axios.put(`URL_DEL_BACKEND/api/orders/${orderId}/unavailable-item`, {
+          action: 'remove' || 'substitute', // Según la acción seleccionada por el cliente
+        });
+        router.push(`/client/bar-details/[barId]/manage-item`);
+      } catch (error) {
+        console.error('Error actualizando el estado del ítem no disponible:', error);
+      }
+    };
+
+    updateUnavailableItem(); // Llama a la función para actualizar el estado
+    */
+    
+    router.push(`/client/bar-details/[barId]/manage-item`); // Redirigir a la gestión de ítems
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Productos del Bar (ID del Bar: {barId})</Text>
-      {/* Mostrando el número de mesa en la interfaz */}
-      <Text style={styles.tableNumberText}>Número de Mesa: {tableNumber}</Text>
+      {/* Agregar el ícono de notificación en la parte superior */}
+      <View style={styles.notificationContainer}>
+        <NotificationIcon hasNotification={hasNotification} onPress={handleNotificationPress} />
+      </View>
 
+      <Text style={styles.title}>Productos del Bar</Text>
       <FlatList
         data={products}
         renderItem={({ item }) => (
@@ -128,18 +207,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  notificationContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     margin: 20,
     color: '#2B2D42',
-  },
-  tableNumberText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 20,
-    color: '#EF233C',
-    marginBottom: 10, // Espacio extra para separarlo del título
   },
   list: {
     paddingBottom: 100,
@@ -150,8 +227,11 @@ const styles = StyleSheet.create({
     margin: 10,
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
-    borderColor: '#ddd',
-    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 2,
   },
   productImage: {
     width: 80,

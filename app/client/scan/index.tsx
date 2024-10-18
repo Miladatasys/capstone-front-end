@@ -36,31 +36,29 @@ export default function ClientScanScreen() {
   }
 
   const handleBarcodeScanned = ({ data }) => {
-    // Verificar si ya se ha escaneado
     if (scanned) return;
-
-    setScanned(true); // Evitar más escaneos
-    console.log("Datos escaneados:", data); // Verifica qué estás escaneando
-
+  
+    setScanned(true); 
     const tableNumber = processBarCodeData(data);
-
+  
     if (!tableNumber) {
       Toast.show({
         type: 'error',
         text1: 'Error al escanear',
         text2: 'No se pudo procesar el código QR. Inténtalo de nuevo.',
       });
-      setScanned(false); // Permitir escanear de nuevo
+      setScanned(false);
       return;
     }
-
+  
     setScannedData(tableNumber);
-
-    // Redirigir al bar con el ID y la mesa escaneada
+  
+    // Asegúrate de que `tableNumber` y `barId` están siendo pasados correctamente
     setTimeout(() => {
-      router.push(`/client/bar-details/${barId}?tableNumber=${tableNumber}`);
-    }, 2000); // Redirige después de 2 segundos
+      router.push(`/client/bar-details/${barId}?tableNumber=${tableNumber}`); // Asegúrate de que el parámetro tableNumber es parte de la URL
+    }, 2000);
   };
+  
 
   function processBarCodeData(data) {
     try {

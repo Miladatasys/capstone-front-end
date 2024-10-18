@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 
+
 const BarSignInScreen: React.FC = () => {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -9,7 +10,7 @@ const BarSignInScreen: React.FC = () => {
 
   const onBarSignInPressed = () => {
     console.log('Inicio de sesión de bar con', email, password);
-    router.push("/bar/home"); 
+    router.push("/bar/orders/Orders"); 
   };
 
   const onBarSignUpPressed = () => {

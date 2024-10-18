@@ -76,7 +76,7 @@ const BarDetailsScreen: React.FC = () => {
       ...product,
       quantity: quantities[product.id],
     }));
-  
+
     if (selectedProducts.length > 0) {
       const productsString = JSON.stringify(selectedProducts);
 
@@ -106,7 +106,7 @@ const BarDetailsScreen: React.FC = () => {
 
       sendOrder(); // Llama a la función para enviar la orden
       */
-      
+
       router.push({
         pathname: `/client/bar-details/[barId]/OrderSummaryScreen`,
         params: { products: productsString },
@@ -139,7 +139,7 @@ const BarDetailsScreen: React.FC = () => {
 
     updateUnavailableItem(); // Llama a la función para actualizar el estado
     */
-    
+
     router.push(`/client/bar-details/[barId]/manage-item`); // Redirigir a la gestión de ítems
   };
 

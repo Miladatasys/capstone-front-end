@@ -1,13 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 
 const BarBottomBar: React.FC = () => {
   const router = useRouter();
-  const pathname = usePathname(); // Hook para obtener la ruta actual
+  const pathname = usePathname();
+  const [notifications, setNotifications] = useState<number>(0); // Estado para manejar la cantidad de notificaciones
 
-  // Determina qué pestaña está activa según la ruta actual
+  // Función para obtener las notificaciones (simulación por ahora)
+  useEffect(() => {
+    // Simula recibir una notificación después de 5 segundos (para pruebas)
+    setTimeout(() => {
+      setNotifications(notifications + 1);
+    }, 5000);
+  }, []);
+
   const getTabColor = (tabRoute: string) => {
     return pathname.includes(tabRoute) ? '#EF233C' : '#747272';
   };
@@ -16,7 +24,6 @@ const BarBottomBar: React.FC = () => {
     return pathname.includes(tabRoute) ? styles.selectedIconText : styles.iconText;
   };
 
-  // Verifica si ya está en la página actual antes de redirigir
   const handleNavigation = (route: string) => {
     if (!pathname.includes(route)) {
       router.push(route);
@@ -25,7 +32,6 @@ const BarBottomBar: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Botón de Pedidos */}
       <TouchableOpacity onPress={() => handleNavigation('/bar/orders')}>
         <View style={styles.iconContainer}>
           <Ionicons name="list-outline" size={24} color={getTabColor('/bar/orders')} />
@@ -33,15 +39,14 @@ const BarBottomBar: React.FC = () => {
         </View>
       </TouchableOpacity>
 
-      {/* Botón de Notificaciones */}
       <TouchableOpacity onPress={() => handleNavigation('/bar/notifications')}>
         <View style={styles.iconContainer}>
           <Ionicons name="notifications-outline" size={24} color={getTabColor('/bar/notifications')} />
-          <Text style={getTextStyle('/bar/notifications')}>Notificaciones</Text>
+          {/* Mostrar la cantidad de notificaciones */}
+          <Text style={getTextStyle('/bar/notifications')}>Notificaciones {notifications > 0 ? `(${notifications})` : ''}</Text>
         </View>
       </TouchableOpacity>
 
-      {/* Botón de Mi Cuenta */}
       <TouchableOpacity onPress={() => handleNavigation('/bar/account/AccountSettingsScreen')}>
         <View style={styles.iconContainer}>
           <Ionicons name="person-outline" size={24} color={getTabColor('/bar/account')} />

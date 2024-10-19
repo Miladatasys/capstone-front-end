@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   confirmButton: {
-    backgroundColor: '#cdcdcd', // Cambiado a gris
+    backgroundColor: '#3cb043', // Cambiado a gris
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 5,

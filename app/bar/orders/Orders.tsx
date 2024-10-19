@@ -17,12 +17,12 @@ const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const router = useRouter();
 
-  // Simulamos datos falsos por ahora
+  // Datos simulados actualizados con los nuevos estados
   const ordersData: Order[] = [
-    { id: '1', table: 'Mesa 1', items: 'Cerveza, Pisco Sour', total: 12000, status: 'Pendiente' },
-    { id: '2', table: 'Mesa 2', items: 'Vodka, Papas Fritas', total: 8000, status: 'En proceso' },
-    { id: '3', table: 'Mesa 3', items: 'Pizza', total: 15000, status: 'Completado' },
-    { id: '4', table: 'Mesa 4', items: 'Cerveza', total: 4000, status: 'Cancelado' },
+    { id: '1', table: 'Mesa 1', items: 'Cerveza, Pisco Sour', total: 12000, status: 'Propuesta pendiente' },
+    { id: '2', table: 'Mesa 2', items: 'Vodka, Papas Fritas', total: 8000, status: 'Aceptado' },
+    { id: '3', table: 'Mesa 3', items: 'Pizza', total: 15000, status: 'Cancelado por cliente' },
+    { id: '4', table: 'Mesa 4', items: 'Cerveza', total: 4000, status: 'Rechazado por bar' }, // Nueva categoría
   ];
 
   useEffect(() => {
@@ -57,14 +57,14 @@ const Orders: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Pendiente':
-        return '#EF233C';
-      case 'En proceso':
-        return '#FCA311';
-      case 'Completado':
-        return '#4CAF50';
-      case 'Cancelado':
-        return '#757575';
+      case 'Propuesta pendiente':
+        return '#FCA311'; // Mostaza para propuesta pendiente
+      case 'Aceptado':
+        return '#4CAF50'; // Verde para aceptado
+      case 'Cancelado por cliente':
+        return '#EF233C'; // Rojo para cancelado por cliente
+      case 'Rechazado por bar': // Nueva categoría con color personalizado
+        return '#FF6347'; // Tomate para rechazos
       default:
         return '#000';
     }
@@ -87,7 +87,7 @@ const Orders: React.FC = () => {
 
   const renderInProgressOrders = () => (
     <FlatList
-      data={filterOrdersByStatus('En proceso')}
+      data={filterOrdersByStatus('Propuesta pendiente')}
       renderItem={renderOrderItem}
       keyExtractor={item => item.id}
     />
@@ -95,7 +95,7 @@ const Orders: React.FC = () => {
 
   const renderCompletedOrders = () => (
     <FlatList
-      data={filterOrdersByStatus('Completado')}
+      data={filterOrdersByStatus('Aceptado')}
       renderItem={renderOrderItem}
       keyExtractor={item => item.id}
     />
@@ -103,7 +103,15 @@ const Orders: React.FC = () => {
 
   const renderCancelledOrders = () => (
     <FlatList
-      data={filterOrdersByStatus('Cancelado')}
+      data={filterOrdersByStatus('Cancelado por cliente')}
+      renderItem={renderOrderItem}
+      keyExtractor={item => item.id}
+    />
+  );
+
+  const renderRejectedOrders = () => (
+    <FlatList
+      data={filterOrdersByStatus('Rechazado por bar')} // Filtrar por el nuevo estado
       renderItem={renderOrderItem}
       keyExtractor={item => item.id}
     />
@@ -122,9 +130,10 @@ const Orders: React.FC = () => {
   const [routes] = useState([
     { key: 'all', title: 'Todos' },
     { key: 'pending', title: 'Pendiente' },
-    { key: 'inProgress', title: 'En Proceso' },
-    { key: 'completed', title: 'Completado' },
-    { key: 'cancelled', title: 'Cancelado' },
+    { key: 'inProgress', title: 'Propuesta pendiente' },
+    { key: 'completed', title: 'Aceptado' },
+    { key: 'cancelled', title: 'Cancelado por cliente' },
+    { key: 'rejected', title: 'Rechazado por bar' }, // Nueva pestaña
   ]);
 
   const renderScene = SceneMap({
@@ -132,6 +141,7 @@ const Orders: React.FC = () => {
     inProgress: renderInProgressOrders,
     completed: renderCompletedOrders,
     cancelled: renderCancelledOrders,
+    rejected: renderRejectedOrders, // Escena de pedidos rechazados
     all: renderAllOrders,
   });
 

@@ -69,8 +69,8 @@ const BarOrderDetails: React.FC = () => {
       )
     );
     const item = adjustedItems.find((item) => item.name === itemName);
-    if (item) {
-      setAdjustedTotal((prevTotal) => prevTotal + item.price * change);
+    if (item && item.quantity + change >= 0) { // Asegurar que el total no siga reduciéndose si la cantidad es 0
+      setAdjustedTotal((prevTotal) => Math.max(0, prevTotal + item.price * change));
     }
   };
 
@@ -95,7 +95,10 @@ const BarOrderDetails: React.FC = () => {
         onPress: async () => {
           // Simulación de confirmación de pedido
           Alert.alert('Éxito', 'El pedido ha sido confirmado con los productos disponibles.');
-
+          
+          // Redirigir a la pantalla de lista de pedidos
+          router.push('/bar/orders/Orders');
+          
           // Aquí es donde deberíamos integrar el backend para actualizar el estado del pedido:
           /*
           try {
@@ -116,6 +119,9 @@ const BarOrderDetails: React.FC = () => {
   const handleProposeChange = () => {
     Alert.alert('Cambio propuesto', 'Propuesta de cambio enviada al cliente.');
 
+    // Redirigir a la pantalla de lista de pedidos
+    router.push('/bar/orders/Orders');
+    
     // Aquí es donde debería enviar la propuesta de cambio al backend:
     /*
     try {
@@ -130,13 +136,46 @@ const BarOrderDetails: React.FC = () => {
     */
   };
 
+  const handleRejectOrder = () => {
+    Alert.alert('Confirmación', '¿Rechazar este pedido?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Aceptar',
+        onPress: async () => {
+          Alert.alert('Pedido Rechazado', 'El pedido ha sido rechazado.');
+
+          // Redirigir a la pantalla de lista de pedidos
+          router.push('/bar/orders/Orders');
+          
+          // Aquí es donde deberíamos integrar el backend para actualizar el estado del pedido como rechazado:
+          /*
+          try {
+            await axios.put(`https://tu-backend.com/api/orders/${id}/reject`, {
+              adjustedItems,
+              adjustedTotal,
+            });
+            // Actualizar el estado del pedido si es necesario
+          } catch (error) {
+            console.error('Error al rechazar el pedido:', error);
+          }
+          */
+        },
+      },
+    ]);
+  };
+
   if (!order) {
     return <Text>Cargando...</Text>;
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Revisar Pedido</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Revisar Pedido</Text>
+        <TouchableOpacity style={styles.rejectButton} onPress={handleRejectOrder}>
+          <Text style={styles.rejectButtonText}>Rechazar Pedido</Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={adjustedItems}
@@ -195,11 +234,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
+    marginBottom: 40,
+  },
+  rejectButton: {
+    backgroundColor: '#EF233C',
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 10,
+    marginBottom: 50,
+  },
+  rejectButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   itemBox: {
     backgroundColor: '#F5F5F5',
@@ -213,7 +269,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 16,
     fontWeight: 'bold',
-    width: '40%', // Ajusta este valor según la longitud de los nombres
+    width: '40%',
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -233,7 +289,7 @@ const styles = StyleSheet.create({
   quantityText: {
     fontSize: 18,
     width: 25,
-    textAlign: 'center', // Asegura que los números estén centrados
+    textAlign: 'center',
   },
   unavailableButton: {
     padding: 8,

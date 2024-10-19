@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
-import { Ionicons } from '@expo/vector-icons'; // Importamos Ionicons para usar íconos
+import { Ionicons } from '@expo/vector-icons';
 
 interface Product {
   id: string;
@@ -10,13 +10,12 @@ interface Product {
   price: number;
   quantity: number;
   image: string;
-  available: boolean; // Indicamos si el producto está disponible o no
+  available: boolean;
 }
 
 const OrderSummaryScreen: React.FC = () => {
   const router = useRouter();
   const { products: productsParam } = useLocalSearchParams();
-
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -59,10 +58,29 @@ const OrderSummaryScreen: React.FC = () => {
   // Simulamos el tiempo de confirmación del pedido
   useEffect(() => {
     setTimeout(() => {
-      const orderConfirmed = Math.random() > 0.5; // 50% de posibilidades de confirmar el pedido
+      // Aquí llamamos al backend para verificar si el pedido fue confirmado
+      /*
+      const checkOrderStatus = async () => {
+        try {
+          const response = await axios.get('URL_BACKEND/orders/status'); // Cambia URL_BACKEND por la URL real
+          const orderConfirmed = response.data.confirmed;
+          setIsOrderConfirmed(orderConfirmed);
+          setIsLoading(false);
+        } catch (error) {
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'No se pudo verificar el estado del pedido.',
+          });
+        }
+      };
+
+      checkOrderStatus();
+      */
+      const orderConfirmed = Math.random() > 0.5; // Simulación
       setIsOrderConfirmed(orderConfirmed);
       setIsLoading(false);
-    }, 5000); // Esperamos 5 segundos para simular el proceso
+    }, 5000);
   }, []);
 
   const calculateTotal = () => {
@@ -75,7 +93,7 @@ const OrderSummaryScreen: React.FC = () => {
   };
 
   const handleModifyOrder = () => {
-    router.back(); // Redirigimos de vuelta a la pantalla de detalles del bar para modificar el pedido
+    router.back();
   };
 
   const handleAcceptInconvenience = () => {
@@ -84,28 +102,14 @@ const OrderSummaryScreen: React.FC = () => {
       text1: 'Inconveniente aceptado',
       text2: 'Se procederá con el pedido modificado.',
     });
-    handleProceedToPayment(); // Continuamos con el pago
-  };
-
-  const renderProductIcon = (available: boolean) => {
-    return available ? (
-      <Ionicons name="checkmark-circle" size={24} color="green" />
-    ) : (
-      <Ionicons name="close-circle" size={24} color="red" />
-    );
+    handleProceedToPayment();
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Resumen del Pedido</Text>
-
       <FlatList
         data={products}
-        ListHeaderComponent={
-          <>
-            <Text style={styles.title}>Resumen del Pedido</Text>
-          </>
-        }
+        ListHeaderComponent={<Text style={styles.title}>Resumen del Pedido</Text>}
         renderItem={({ item }) => (
           <View style={styles.productCard}>
             <View style={styles.productInfo}>
@@ -113,68 +117,38 @@ const OrderSummaryScreen: React.FC = () => {
               <Text style={styles.productDetails}>
                 C/U ${item.price.toLocaleString()} x {item.quantity.toString().padStart(2, '0')} unidades
               </Text>
-              <Text style={styles.subtotal}>
-                Subtotal: ${(item.price * item.quantity).toLocaleString()}
-              </Text>
+              <Text style={styles.subtotal}>Subtotal: ${(item.price * item.quantity).toLocaleString()}</Text>
             </View>
-            {/* Icono verde o rojo según la disponibilidad */}
-            <View style={styles.productIcon}>{renderProductIcon(item.available)}</View>
+            <View style={styles.productIcon}>
+              <Ionicons name="checkmark-circle" size={24} color={item.available ? "green" : "red"} />
+            </View>
           </View>
         )}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
         ListFooterComponent={
-          <>
-            <View style={styles.summary}>
-              <Text style={styles.totalText}>Total: ${total.toLocaleString()}</Text>
-            </View>
+          <View style={styles.footer}>
+            <Text style={styles.totalText}>Total: ${total.toLocaleString()}</Text>
 
             {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#EF233C" />
-                <Text style={styles.loadingText}>Esperando confirmación del local...</Text>
-                <Image
-                  source={{ uri: 'https://i.gifer.com/YCZH.gif' }} // Ejemplo de animación GIF de carga
-                  style={styles.loadingIcon}
-                />
-              </View>
+              <ActivityIndicator size="large" color="#EF233C" />
             ) : isOrderConfirmed ? (
-              <View style={styles.confirmationContainer}>
-                <Text style={styles.confirmationText}>✅ Pedido Confirmado!</Text>
-                <Pressable
-                  style={({ pressed }) => [styles.confirmButton, pressed && styles.confirmButtonPressed]}
-                  onPress={handleProceedToPayment}
-                >
-                  <Ionicons name="cash" size={18} color="white" />
-                  <Text style={styles.confirmButtonText}>Proceder al Pago</Text>
+              <Pressable style={styles.button} onPress={handleProceedToPayment}>
+                <Text style={styles.buttonText}>✅ Pedido Confirmado - Proceder al Pago</Text>
+              </Pressable>
+            ) : (
+              <View>
+                <Text style={styles.errorText}>⚠️ Inconveniente con el Pedido</Text>
+                <Pressable style={styles.button} onPress={handleModifyOrder}>
+                  <Text style={styles.buttonText}>Modificar Pedido</Text>
+                </Pressable>
+                <Pressable style={styles.button} onPress={handleAcceptInconvenience}>
+                  <Text style={styles.buttonText}>Aceptar Inconveniente y Continuar</Text>
                 </Pressable>
               </View>
-            ) : (
-              <View style={styles.inconvenienceContainer}>
-                <Text style={styles.inconvenienceText}>⚠️ Inconveniente con el Pedido</Text>
-                <Text style={styles.inconvenienceDetail}>Algunos productos no están disponibles o hay un problema.</Text>
-                <View style={styles.buttonRow}>
-                  <Pressable
-                    style={({ pressed }) => [styles.modifyButton, pressed && styles.modifyButtonPressed]}
-                    onPress={handleModifyOrder}
-                  >
-                    <Ionicons name="arrow-back" size={18} color="white" />
-                    <Text style={styles.modifyButtonText}>Modificar Pedido</Text>
-                  </Pressable>
-                  <Pressable
-                    style={({ pressed }) => [styles.acceptButton, pressed && styles.acceptButtonPressed]}
-                    onPress={handleAcceptInconvenience}
-                  >
-                    <Ionicons name="checkmark" size={18} color="white" />
-                    <Text style={styles.acceptButtonText}>Aceptar y Continuar</Text>
-                  </Pressable>
-                </View>
-              </View>
             )}
-          </>
+          </View>
         }
       />
-
       <Toast />
     </SafeAreaView>
   );
@@ -270,46 +244,38 @@ const styles = StyleSheet.create({
     color: '#2B2D42',
     marginBottom: 20,
   },
-  confirmButton: {
+  footer: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    backgroundColor: '#fff',
+    marginBottom: 15,
+  },
+  button: {
     backgroundColor: '#EF233C',
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 5,
     alignItems: 'center',
-    flexDirection: 'row', // Mostrar ícono y texto juntos
+    flexDirection: 'row',
     marginBottom: 20, // Añadir margen inferior
   },
-  confirmButtonPressed: {
+  buttonPressed: {
     backgroundColor: '#C71F33',
   },
-  confirmButtonText: {
+  buttonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8, // Espacio entre ícono y texto
   },
-  inconvenienceContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  inconvenienceText: {
-    fontSize: 24,
+  errorText: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#C71F33',
-    marginBottom: 10,
-  },
-  inconvenienceDetail: {
-    fontSize: 16,
-    color: '#666',
     marginBottom: 20,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 20,
-    marginBottom: 20, // Añadir margen inferior
+    textAlign: 'center',
   },
   modifyButton: {
     backgroundColor: '#888',
@@ -351,5 +317,6 @@ const styles = StyleSheet.create({
     marginLeft: 8, // Espacio entre ícono y texto
   },
 });
+
 
 export default OrderSummaryScreen;

@@ -19,6 +19,29 @@ const BarDetailsScreen: React.FC = () => {
       setHasNotification(true); // Mostrar la notificación después de 5 segundos (simulación)
     }, 5000);
 
+    // Aquí llamamos al backend para obtener los productos
+    /*
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('URL_BACKEND/products'); // Cambia URL_BACKEND por la URL real del backend
+        setProducts(response.data); // Asignamos los productos recibidos del backend
+        const initialQuantities = {};
+        response.data.forEach(product => {
+          initialQuantities[product.id] = 0;
+        });
+        setQuantities(initialQuantities);
+      } catch (error) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error al obtener productos',
+          text2: 'No se pudieron cargar los productos del bar.',
+        });
+      }
+    };
+
+    fetchProducts(); // Llamamos a la función al montar el componente
+    */
+
     // Datos simulados mientras no esté disponible el backend
     setProducts([
       { id: '1', name: 'Cerveza Artesanal', price: 3500, image: 'https://via.placeholder.com/80' },
@@ -26,30 +49,12 @@ const BarDetailsScreen: React.FC = () => {
       { id: '3', name: 'Vino Tinto', price: 5000, image: 'https://via.placeholder.com/80' },
     ]);
 
-    // Inicializamos el estado de las cantidades con 0 para cada producto
     setQuantities({
       '1': 0,
       '2': 0,
       '3': 0,
     });
   }, []);
-
-  const updateQuantity = (productId: string, increment: boolean) => {
-    setQuantities((prevQuantities) => {
-      const updatedQuantity = increment
-        ? prevQuantities[productId] + 1
-        : Math.max(prevQuantities[productId] - 1, 0);
-
-      const product = products.find((item) => item.id === productId);
-      const priceDifference = (updatedQuantity - prevQuantities[productId]) * product.price;
-      setTotal((prevTotal) => prevTotal + priceDifference);
-
-      return {
-        ...prevQuantities,
-        [productId]: updatedQuantity,
-      };
-    });
-  };
 
   const handleRequestOrder = () => {
     const selectedProducts = products.filter(product => quantities[product.id] > 0).map(product => ({
@@ -60,12 +65,30 @@ const BarDetailsScreen: React.FC = () => {
     if (selectedProducts.length > 0) {
       const productsString = JSON.stringify(selectedProducts);
 
-      // Simulación de envío de pedido
-      Toast.show({
-        type: 'info',
-        text1: 'Pedido enviado',
-        text2: 'Esperando confirmación...',
-      });
+      // Aquí llamamos al backend para enviar el pedido
+      /*
+      const sendOrder = async () => {
+        try {
+          const response = await axios.post('URL_BACKEND/orders', { 
+            products: selectedProducts,
+            tableId: 'NUMERO_MESA', // Debes enviar también el número de mesa
+          });
+          Toast.show({
+            type: 'success',
+            text1: 'Pedido enviado',
+            text2: 'Esperando confirmación del bar...',
+          });
+        } catch (error) {
+          Toast.show({
+            type: 'error',
+            text1: 'Error al enviar pedido',
+            text2: 'No se pudo enviar el pedido. Inténtalo de nuevo.',
+          });
+        }
+      };
+
+      sendOrder(); // Llamamos a la función para enviar el pedido
+      */
 
       // Redirigir a la pantalla de confirmación
       router.push({
@@ -81,17 +104,14 @@ const BarDetailsScreen: React.FC = () => {
     }
   };
 
-  const handleNotificationPress = () => {
-    setHasNotification(false); // Desactivar la notificación después de presionarla
-
-    // Redirigir a la gestión de ítems
-    router.push(`/client/bar-details/[barId]/manage-item`);
-  };
+  function updateQuantity(id: any, arg1: boolean): void {
+    throw new Error('Function not implemented.');
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.notificationContainer}>
-        <NotificationIcon hasNotification={hasNotification} onPress={handleNotificationPress} />
+        <NotificationIcon hasNotification={hasNotification} onPress={() => router.push(`/client/bar-details/[barId]/manage-item`)} />
       </View>
 
       <Text style={styles.title}>Productos del Bar</Text>

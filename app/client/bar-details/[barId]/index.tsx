@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import BottomNavBarDetails from '../../../../components/Navigation/BottomNavBarDetails';
-import NotificationIcon from '../../../../components/Notification/NotificationIcon'; // Importar el nuevo componente
+import NotificationIcon from '../../../../components/Notification/NotificationIcon';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 // import axios from 'axios'; // Descomentar cuando esté listo el backend
@@ -11,7 +11,7 @@ const BarDetailsScreen: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
-  const [hasNotification, setHasNotification] = useState(false); // Estado para manejar las notificaciones
+  const [hasNotification, setHasNotification] = useState(false);
 
   useEffect(() => {
     // Simulación de notificación por producto no disponible
@@ -32,26 +32,6 @@ const BarDetailsScreen: React.FC = () => {
       '2': 0,
       '3': 0,
     });
-
-    // Aquí es donde llamaría al backend para obtener los productos disponibles de un bar
-    /*
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get(`URL_DEL_BACKEND/api/bar/${barId}/products`);
-        setProducts(response.data); // Actualiza los productos con los datos del backend
-        // Inicializar cantidades de productos
-        const initialQuantities = {};
-        response.data.forEach((product) => {
-          initialQuantities[product.id] = 0;
-        });
-        setQuantities(initialQuantities);
-      } catch (error) {
-        console.error('Error fetching products from backend:', error);
-      }
-    };
-
-    fetchProducts(); // Llama a la función cuando el componente se monta
-    */
   }, []);
 
   const updateQuantity = (productId: string, increment: boolean) => {
@@ -71,7 +51,7 @@ const BarDetailsScreen: React.FC = () => {
     });
   };
 
-  const handlePayPress = () => {
+  const handleRequestOrder = () => {
     const selectedProducts = products.filter(product => quantities[product.id] > 0).map(product => ({
       ...product,
       quantity: quantities[product.id],
@@ -80,33 +60,14 @@ const BarDetailsScreen: React.FC = () => {
     if (selectedProducts.length > 0) {
       const productsString = JSON.stringify(selectedProducts);
 
-      // En esta parte puedo enviar los productos seleccionados al backend
-      /*
-      const sendOrder = async () => {
-        try {
-          await axios.post(`URL_DEL_BACKEND/api/orders`, {
-            barId,
-            tableNumber,  // Asegúrate de tener el número de mesa disponible
-            products: selectedProducts,
-          });
-          router.push({
-            pathname: `/client/bar-details/[barId]/OrderSummaryScreen`,
-            params: { products: productsString },
-          });
-        } catch (error) {
-          console.error('Error al enviar la orden al backend:', error);
-          Toast.show({
-            type: 'error',
-            text1: 'Error al realizar el pedido',
-            text2: 'No se pudo enviar el pedido, por favor intenta nuevamente.',
-            position: 'bottom',
-          });
-        }
-      };
+      // Simulación de envío de pedido
+      Toast.show({
+        type: 'info',
+        text1: 'Pedido enviado',
+        text2: 'Esperando confirmación...',
+      });
 
-      sendOrder(); // Llama a la función para enviar la orden
-      */
-
+      // Redirigir a la pantalla de confirmación
       router.push({
         pathname: `/client/bar-details/[barId]/OrderSummaryScreen`,
         params: { products: productsString },
@@ -116,7 +77,6 @@ const BarDetailsScreen: React.FC = () => {
         type: 'info',
         text1: 'No hay productos seleccionados',
         text2: 'Por favor selecciona algún producto para continuar.',
-        position: 'bottom',
       });
     }
   };
@@ -124,28 +84,12 @@ const BarDetailsScreen: React.FC = () => {
   const handleNotificationPress = () => {
     setHasNotification(false); // Desactivar la notificación después de presionarla
 
-    // Aquí es donde llamaría al backend para actualizar el estado del pedido cuando el cliente gestiona un ítem no disponible
-    /*
-    const updateUnavailableItem = async () => {
-      try {
-        await axios.put(`URL_DEL_BACKEND/api/orders/${orderId}/unavailable-item`, {
-          action: 'remove' || 'substitute', // Según la acción seleccionada por el cliente
-        });
-        router.push(`/client/bar-details/[barId]/manage-item`);
-      } catch (error) {
-        console.error('Error actualizando el estado del ítem no disponible:', error);
-      }
-    };
-
-    updateUnavailableItem(); // Llama a la función para actualizar el estado
-    */
-
-    router.push(`/client/bar-details/[barId]/manage-item`); // Redirigir a la gestión de ítems
+    // Redirigir a la gestión de ítems
+    router.push(`/client/bar-details/[barId]/manage-item`);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Agregar el ícono de notificación en la parte superior */}
       <View style={styles.notificationContainer}>
         <NotificationIcon hasNotification={hasNotification} onPress={handleNotificationPress} />
       </View>
@@ -191,8 +135,8 @@ const BarDetailsScreen: React.FC = () => {
 
       <View style={styles.totalBar}>
         <Text style={styles.totalText}>Total: ${total.toLocaleString()}</Text>
-        <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
-          <Text style={styles.payButtonText}>Pagar</Text>
+        <TouchableOpacity style={styles.payButton} onPress={handleRequestOrder}>
+          <Text style={styles.payButtonText}>Pedir</Text> 
         </TouchableOpacity>
       </View>
 

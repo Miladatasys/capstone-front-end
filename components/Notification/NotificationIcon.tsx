@@ -9,35 +9,43 @@ interface NotificationIconProps {
 
 const NotificationIcon: React.FC<NotificationIconProps> = ({ hasNotification, onPress }) => {
   return (
-    <TouchableOpacity onPress={onPress} style={styles.container}>
-      <MaterialIcons
-        name="notifications"
-        size={35} // Tamaño más grande del ícono
-        color={hasNotification ? 'grey' : 'black'} // Cambiamos el color dependiendo de si hay notificación
-      />
-      {hasNotification && (
-        <View style={styles.notificationBadge}>
-          {/* Punto rojo indicando notificación */}
-        </View>
-      )}
+    // Agrandamos el área del TouchableOpacity para que sea más fácil de presionar
+    <TouchableOpacity onPress={onPress} style={styles.touchableContainer}>
+      <View style={styles.iconContainer}>
+        <MaterialIcons
+          name="notifications"
+          size={35} // Tamaño del ícono
+          color={hasNotification ? 'grey' : 'black'} // Cambiamos el color dependiendo de si hay notificación
+        />
+        {hasNotification && (
+          <View style={styles.notificationBadge}>
+            {/* Punto rojo indicando notificación */}
+          </View>
+        )}
+      </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  touchableContainer: {
+    // Aumentamos el tamaño para hacer el área más grande y fácil de presionar
+    padding: 10, // Aumentamos el padding para hacer más grande el área presionable
+    borderRadius: 25, // Redondeamos el área de toque
+    backgroundColor: 'transparent', // Fondo transparente
+  },
+  iconContainer: {
     position: 'relative',
-    padding: 5, // Reducimos el padding para acercar más el punto a la campana
   },
   notificationBadge: {
     position: 'absolute',
-    top: 2, // Más cerca del ícono
-    right: 2,
-    width: 12, // Tamaño más grande
-    height: 12,
-    borderRadius: 6, // Circular
+    top: 0, // Más cerca del ícono
+    right: 0,
+    width: 14, // Tamaño más grande
+    height: 14,
+    borderRadius: 7, // Circular
     backgroundColor: 'red',
-    borderWidth: 1.5, // Borde delgado para mayor contraste
+    borderWidth: 2, // Borde delgado para mayor contraste
     borderColor: 'white',
   },
 });

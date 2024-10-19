@@ -56,6 +56,26 @@ const BarDetailsScreen: React.FC = () => {
     });
   }, []);
 
+  const updateQuantity = (id: string, isIncrement: boolean) => {
+    setQuantities((prevQuantities) => {
+      const currentQuantity = prevQuantities[id] || 0;
+      const newQuantity = isIncrement ? currentQuantity + 1 : Math.max(0, currentQuantity - 1);
+
+      // Recalculamos el total
+      const updatedTotal = products.reduce((acc, product) => {
+        const quantity = product.id === id ? newQuantity : prevQuantities[product.id];
+        return acc + product.price * quantity;
+      }, 0);
+
+      setTotal(updatedTotal);
+
+      return {
+        ...prevQuantities,
+        [id]: newQuantity,
+      };
+    });
+  };
+
   const handleRequestOrder = () => {
     const selectedProducts = products.filter(product => quantities[product.id] > 0).map(product => ({
       ...product,
@@ -104,10 +124,6 @@ const BarDetailsScreen: React.FC = () => {
     }
   };
 
-  function updateQuantity(id: any, arg1: boolean): void {
-    throw new Error('Function not implemented.');
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.notificationContainer}>
@@ -143,7 +159,7 @@ const BarDetailsScreen: React.FC = () => {
               <View style={styles.subtotalContainer}>
                 <Text style={styles.subtotalLabel}>Subtotal</Text>
                 <Text style={styles.subtotalAmount}>
-                  ${ (quantities[item.id] * item.price).toLocaleString() }
+                  ${(quantities[item.id] * item.price).toLocaleString()}
                 </Text>
               </View>
             </View>

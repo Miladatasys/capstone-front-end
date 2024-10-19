@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import Logo from '../../../assets/images/Logo_2.png';
 import ClientCustomInput from '../../../components/CustomInput/ClientCustomInput';
 import Toast from 'react-native-toast-message';
+// import axios from 'axios'; // Descomentar cuando esté lista la integración con el backend
 
 const ClientNewPasswordScreen: React.FC = () => {
   const [code, setCode] = useState<string>('');
@@ -11,7 +12,7 @@ const ClientNewPasswordScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const router = useRouter();
 
-  const onSubmitPressed = () => {
+  const onSubmitPressed = async () => {
     if (!code.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       Toast.show({
         type: 'error',
@@ -30,7 +31,38 @@ const ClientNewPasswordScreen: React.FC = () => {
       return;
     }
 
-    // Mostrar un toast de éxito y luego redirigir al inicio de sesión
+    // Aquí iría la integración con el backend para restablecer la contraseña
+    /*
+    try {
+      const response = await axios.post('URL_DEL_BACKEND/api/reset-password', {
+        code,
+        newPassword,
+      });
+
+      // Si la contraseña se restablece exitosamente
+      if (response.status === 200) {
+        Toast.show({
+          type: 'success',
+          text1: 'Contraseña restablecida',
+          text2: 'Tu contraseña ha sido restablecida exitosamente.',
+        });
+
+        // Redirigir al usuario a la pantalla de inicio de sesión
+        setTimeout(() => {
+          router.push("/client/auth/ClientSignInScreen");
+        }, 2000); // Esperar 2 segundos antes de redirigir
+      }
+    } catch (error) {
+      // Mostrar un Toast en caso de error al restablecer la contraseña
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.response?.data?.message || 'Hubo un error al restablecer la contraseña. Inténtalo nuevamente.',
+      });
+    }
+    */
+
+    // Simulación de restablecimiento exitoso mientras el backend no esté disponible
     Toast.show({
       type: 'success',
       text1: 'Contraseña restablecida',

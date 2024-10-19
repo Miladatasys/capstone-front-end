@@ -1,95 +1,133 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, TextInput, FlatList } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router'; 
-// import axios from 'axios'; // Descomenta esto cuando el backend esté listo
+import { View, Text, StyleSheet, Alert, TouchableOpacity, FlatList } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+// import axios from 'axios'; // Descomentar esto cuando el backend esté listo
 
 interface Order {
   id: string;
   table: string;
-  items: string[];
+  items: { name: string; price: number; quantity: number }[];
   total: number;
   status: string;
   customer: string;
 }
 
 const BarOrderDetails: React.FC = () => {
-  const { id } = useLocalSearchParams(); 
+  const { id } = useLocalSearchParams();
   const router = useRouter();
 
   const [order, setOrder] = useState<Order | null>(null);
-  const [orderStatus, setOrderStatus] = useState<string | null>(null);
+  const [adjustedItems, setAdjustedItems] = useState<Order['items']>([]);
+  const [adjustedTotal, setAdjustedTotal] = useState<number>(0);
 
-  // Simulación de los datos mientras tanto (reemplazar por la llamada al backend cuando esté listo)
   useEffect(() => {
-    // Cuando el backend esté listo, descomentar esta función y eliminar los datos simulados
-    // const fetchOrder = async () => {
-    //   try {
-    //     const response = await axios.get(`URL_DEL_BACKEND/api/orders/${id}`); // Cambia la URL por la real
-    //     setOrder(response.data); // Actualiza los datos del pedido con la respuesta del backend
-    //     setOrderStatus(response.data.status); // Establece el estado del pedido
-    //   } catch (error) {
-    //     console.error('Error al obtener los detalles del pedido:', error);
-    //   }
-    // };
-    
-    // fetchOrder(); // Llama a la función para obtener los datos del pedido
-
-    // Simulación de los datos del pedido mientras se integra el backend
+    // Simulación de datos (descomentar para usar el backend)
     const simulatedOrder: Order = {
       id: id as string,
       table: '3',
-      items: ['Bebida 1', 'Bebida 2', 'Bebida 3', 'Bebida 4'],
+      items: [
+        { name: 'Bebida 1', price: 3000, quantity: 2 },
+        { name: 'Bebida 2', price: 2500, quantity: 1 },
+        { name: 'Bebida 3', price: 4000, quantity: 3 },
+        { name: 'Bebida 4', price: 1680, quantity: 1 },
+      ],
       total: 13180,
       status: 'Pendiente',
       customer: 'Nombre',
     };
 
+    // Aquí es donde realizarías la llamada al backend para obtener los detalles del pedido:
+    /*
+    const fetchOrder = async () => {
+      try {
+        const response = await axios.get(`https://tu-backend.com/api/orders/${id}`);
+        setOrder(response.data);
+        setAdjustedItems(response.data.items);
+        setAdjustedTotal(response.data.total);
+      } catch (error) {
+        console.error('Error al obtener los detalles del pedido:', error);
+      }
+    };
+
+    fetchOrder(); 
+    */
+
     setOrder(simulatedOrder);
-    setOrderStatus(simulatedOrder.status);
+    setAdjustedItems(simulatedOrder.items);
+    setAdjustedTotal(simulatedOrder.total);
   }, [id]);
 
-  const handleMarkAsCompleted = () => {
-    Alert.alert('Confirmación', '¿Marcar este pedido como completado?', [
+  const handleChangeQuantity = (itemName: string, change: number) => {
+    setAdjustedItems((prevItems) =>
+      prevItems.map((item) =>
+        item.name === itemName
+          ? {
+              ...item,
+              quantity: Math.max(0, item.quantity + change), // No permitir cantidad negativa
+            }
+          : item
+      )
+    );
+    const item = adjustedItems.find((item) => item.name === itemName);
+    if (item) {
+      setAdjustedTotal((prevTotal) => prevTotal + item.price * change);
+    }
+  };
+
+  const handleMarkAsUnavailable = (itemName: string) => {
+    setAdjustedItems((prevItems) =>
+      prevItems.map((item) =>
+        item.name === itemName
+          ? {
+              ...item,
+              quantity: 0, // Poner cantidad a 0 para marcarlo como agotado
+            }
+          : item
+      )
+    );
+  };
+
+  const handleConfirmOrder = () => {
+    Alert.alert('Confirmación', '¿Confirmar este pedido ajustado?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Aceptar',
         onPress: async () => {
-          // Cuando el backend esté listo, descomentar esto para la actualización del estado del pedido
-          // try {
-          //   await axios.put(`URL_DEL_BACKEND/api/orders/${id}/complete`); // Llama al endpoint correspondiente
-          //   setOrderStatus('Completado');
-          //   Alert.alert('Éxito', 'El pedido ha sido marcado como completado.');
-          // } catch (error) {
-          //   console.error('Error al marcar el pedido como completado:', error);
-          // }
+          // Simulación de confirmación de pedido
+          Alert.alert('Éxito', 'El pedido ha sido confirmado con los productos disponibles.');
 
-          setOrderStatus('Completado'); // Simulación del cambio de estado
-          Alert.alert('Éxito', 'El pedido ha sido marcado como completado.');
+          // Aquí es donde deberíamos integrar el backend para actualizar el estado del pedido:
+          /*
+          try {
+            await axios.put(`https://tu-backend.com/api/orders/${id}/confirm`, {
+              adjustedItems,
+              adjustedTotal,
+            });
+            // Actualizar el estado del pedido si es necesario
+          } catch (error) {
+            console.error('Error al confirmar el pedido:', error);
+          }
+          */
         },
       },
     ]);
   };
 
-  const handleCancelOrder = () => {
-    Alert.alert('Confirmación', '¿Cancelar este pedido?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Aceptar',
-        onPress: async () => {
-          // Cuando el backend esté listo, descomentar esto para la cancelación del pedido
-          // try {
-          //   await axios.put(`URL_DEL_BACKEND/api/orders/${id}/cancel`); // Llama al endpoint correspondiente
-          //   setOrderStatus('Cancelado');
-          //   Alert.alert('Éxito', 'El pedido ha sido cancelado.');
-          // } catch (error) {
-          //   console.error('Error al cancelar el pedido:', error);
-          // }
+  const handleProposeChange = () => {
+    Alert.alert('Cambio propuesto', 'Propuesta de cambio enviada al cliente.');
 
-          setOrderStatus('Cancelado'); // Simulación del cambio de estado
-          Alert.alert('Éxito', 'El pedido ha sido cancelado.');
-        },
-      },
-    ]);
+    // Aquí es donde debería enviar la propuesta de cambio al backend:
+    /*
+    try {
+      await axios.post(`https://tu-backend.com/api/orders/${id}/propose-change`, {
+        adjustedItems,
+        adjustedTotal,
+      });
+      // Manejar la respuesta del backend si es necesario
+    } catch (error) {
+      console.error('Error al proponer el cambio:', error);
+    }
+    */
   };
 
   if (!order) {
@@ -98,75 +136,57 @@ const BarOrderDetails: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Barra de búsqueda */}
-      <TextInput
-        placeholder="Buscar"
-        style={styles.searchInput}
-      />
+      <Text style={styles.title}>Revisar Pedido</Text>
 
-      {/* Detalles del pedido */}
-      <Text style={styles.title}>Pedidos en Barra</Text>
-      <View style={styles.detailContainer}>
-        <View style={styles.orderHeader}>
-          <Text style={styles.orderBarName}>Bar Providencia</Text>
-          <Text style={styles.orderTotal}>${order.total}</Text>
-        </View>
-        <Text style={styles.orderItemsCount}>{order.items.length} Bebidas</Text>
-
-        {/* Lista de items */}
-        {order.items.map((item, index) => (
-          <View key={index} style={styles.itemBox}>
-            <Text>{item}</Text>
-          </View>
-        ))}
-
-        {/* Información del pedido */}
-        <Text style={styles.infoText}>Nº de Mesa: {order.table}</Text>
-        <Text style={styles.infoText}>Nombre Cliente: {order.customer}</Text>
-
-        {/* Botón de acción */}
-<TouchableOpacity 
-  style={styles.unavailableButton} 
-  onPress={() => router.push(`/bar/orders/ProductUnavailable?id=${id}`)}
->
-  <Text style={styles.unavailableText}>¿Producto no disponible?</Text>
-</TouchableOpacity>
-
-
-        {/* Botón de ver detalles */}
-        <TouchableOpacity style={styles.detailsButton}>
-          <Text style={styles.detailsButtonText}>Ver detalles</Text>
-        </TouchableOpacity>
-
-        {/* Botones de estado si está pendiente */}
-        {orderStatus === 'Pendiente' && (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, styles.completedButton]} onPress={handleMarkAsCompleted}>
-              <Text style={styles.buttonText}>Marcar como Completado</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancelOrder}>
-              <Text style={styles.buttonText}>Cancelar Pedido</Text>
-            </TouchableOpacity>
+      <FlatList
+        data={adjustedItems}
+        keyExtractor={(item) => item.name}
+        renderItem={({ item }) => (
+          <View style={styles.itemBox}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            <View style={styles.actionsContainer}>
+              <View style={styles.quantityContainer}>
+                <Text style={styles.quantityText}>
+                  {item.quantity.toLocaleString('en-US', { minimumIntegerDigits: 2 })}
+                </Text>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => handleChangeQuantity(item.name, -1)}
+                >
+                  <Text style={styles.quantityText}>-</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => handleChangeQuantity(item.name, 1)}
+                >
+                  <Text style={styles.quantityText}>+</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={styles.unavailableButton}
+                onPress={() => handleMarkAsUnavailable(item.name)}
+              >
+                <Text style={styles.unavailableText}>Agotado</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
+      />
+
+      <Text style={styles.infoText}>Mesa: {order.table}</Text>
+      <Text style={styles.infoText}>Cliente: {order.customer}</Text>
+      <Text style={styles.infoText}>Total ajustado: ${adjustedTotal.toLocaleString()}</Text>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={[styles.button, styles.proposeButton]} onPress={handleProposeChange}>
+          <Text style={styles.buttonText}>Proponer Cambio</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, styles.completedButton]} onPress={handleConfirmOrder}>
+          <Text style={styles.buttonText}>Confirmar Pedido</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Pendiente':
-      return '#EF233C';
-    case 'En proceso':
-      return '#FCA311';
-    case 'Completado':
-      return '#4CAF50';
-    case 'Cancelado':
-      return '#757575';
-    default:
-      return '#000';
-  }
 };
 
 const styles = StyleSheet.create({
@@ -175,81 +195,61 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
   },
-  detailContainer: {
+  itemBox: {
     backgroundColor: '#F5F5F5',
-    padding: 16,
+    padding: 10,
+    marginBottom: 10,
     borderRadius: 8,
-  },
-  orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    alignItems: 'center',
   },
-  orderBarName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  orderTotal: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  orderItemsCount: {
+  itemName: {
     fontSize: 16,
-    color: '#888',
-    marginBottom: 16,
+    fontWeight: 'bold',
+    width: '40%', // Ajusta este valor según la longitud de los nombres
   },
-  itemBox: {
-    backgroundColor: '#E5E5E5',
-    padding: 10,
-    marginBottom: 8,
-    borderRadius: 4,
+  actionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  quantityButton: {
+    backgroundColor: '#ddd',
+    padding: 5,
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  quantityText: {
+    fontSize: 18,
+    width: 25,
+    textAlign: 'center', // Asegura que los números estén centrados
+  },
+  unavailableButton: {
+    padding: 8,
+    backgroundColor: '#EF233C',
+    borderRadius: 8,
+  },
+  unavailableText: {
+    color: '#fff',
   },
   infoText: {
     fontSize: 16,
-    color: '#555',
-    marginVertical: 4,
-  },
-  unavailableButton: {
-    backgroundColor: '#E5E5E5',
-    padding: 10,
-    borderRadius: 4,
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  unavailableText: {
-    fontSize: 16,
-    color: '#555',
-  },
-  detailsButton: {
-    backgroundColor: '#E5E5E5',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  detailsButtonText: {
-    color: '#555',
-    fontSize: 16,
-    fontWeight: 'bold',
+    marginVertical: 5,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     marginTop: 20,
   },
   button: {
@@ -258,16 +258,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
   },
   completedButton: {
     backgroundColor: '#4CAF50',
   },
-  cancelButton: {
-    backgroundColor: '#EF233C',
+  proposeButton: {
+    backgroundColor: '#FCA311',
   },
   buttonText: {
     color: '#fff',

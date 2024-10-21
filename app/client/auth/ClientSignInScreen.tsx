@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { View, Image, StyleSheet, ScrollView, Text, Pressable } from 'react-native';
 import { useRouter } from "expo-router";
 import Toast from 'react-native-toast-message';
+import axios from 'axios'; // Ahora habilitado para hacer la integración con el backend
 import Logo from '../../../assets/images/Logo_2.png';
 import ClientCustomInput from '../../../components/CustomInput/ClientCustomInput';
 import ClientCustomButton from '../../../components/CustomButton/ClientCustomButton';
-// import axios from 'axios'; // Descomentar cuando esté lista la integración con el backend
 
 const ClientSignInScreen: React.FC = () => {
   const [username, setUsername] = useState<string>('');
@@ -22,12 +22,11 @@ const ClientSignInScreen: React.FC = () => {
       });
       return;
     }
-    
-    // Aquí iría la integración con el backend para autenticar al usuario
-    /*
+
     try {
-      const response = await axios.post('URL_DEL_BACKEND/api/login', {
-        username,
+      // Realiza la solicitud al backend para autenticar al usuario
+      const response = await axios.post('http://10.0.2.2:3000/api/login', {
+        email: username,
         password,
       });
 
@@ -38,6 +37,10 @@ const ClientSignInScreen: React.FC = () => {
           text1: 'Inicio de Sesión Exitoso',
           text2: 'Bienvenido de nuevo!',
         });
+
+        // Almacena el token JWT si es necesario
+        const token = response.data.token;
+        // Puedes almacenar el token usando AsyncStorage o algún método similar
 
         // Navega a la pantalla de Recomendaciones
         router.push("/client/recommendations/RecommendationsScreen");
@@ -50,19 +53,6 @@ const ClientSignInScreen: React.FC = () => {
         text2: error.response?.data?.message || 'Nombre de usuario o contraseña incorrectos.',
       });
     }
-    */
-
-    // Simulación de inicio de sesión exitoso mientras el backend no esté disponible
-    Toast.show({
-      type: 'success',
-      text1: 'Inicio de Sesión Exitoso',
-      text2: 'Bienvenido de nuevo!',
-    });
-
-    // Si los campos son válidos, navega a la siguiente pantalla
-    setTimeout(() => {
-      router.push("/client/recommendations/RecommendationsScreen");
-    }, 2000); // Simulación de una espera de 2 segundos
   };
 
   const onClientForgotPasswordPressed = () => {

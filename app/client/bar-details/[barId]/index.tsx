@@ -2,35 +2,50 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import BottomNavBarDetails from '../../../../components/Navigation/BottomNavBarDetails';
 import NotificationIcon from '../../../../components/Notification/NotificationIcon';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
-// import axios from 'axios'; // Descomentar cuando esté listo el backend
+import axios from 'axios';
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
+  const { bar_id, table_id } = useLocalSearchParams(); // Asegúrate de que estás recibiendo correctamente bar_id y table_id
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
   const [hasNotification, setHasNotification] = useState(false);
 
   useEffect(() => {
-    // Simulación de notificación por producto no disponible
-    setTimeout(() => {
-      setHasNotification(true); // Mostrar la notificación después de 5 segundos (simulación)
-    }, 5000);
+    console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id }); // Verifica si los parámetros se reciben correctamente
 
-    // Aquí llamamos al backend para obtener los productos
-    /*
+    if (!bar_id) {
+      console.error("Error: El bar_id no fue proporcionado.");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo obtener el id del bar.',
+      });
+      return;
+    }
+
+    // Obtener productos del backend
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('URL_BACKEND/products'); // Cambia URL_BACKEND por la URL real del backend
-        setProducts(response.data); // Asignamos los productos recibidos del backend
+        console.log("Obteniendo productos del bar con id:", bar_id);
+        const response = await axios.get(`http://10.0.2.2:3000/api/bars/${bar_id}/products`);
+        console.log("Productos recibidos:", response.data);
+        setProducts(response.data);
+        // Aquí se cae
+
+
         const initialQuantities = {};
-        response.data.forEach(product => {
-          initialQuantities[product.id] = 0;
+        console.log(initialQuantities)
+        response.data.forEach((product) => {
+          initialQuantities[product.product_id] = 0; // Usar product_id para las cantidades
         });
         setQuantities(initialQuantities);
+        console.log("Cantidades inicializadas:", initialQuantities);
       } catch (error) {
+        console.error("Error al obtener productos:", error);
         Toast.show({
           type: 'error',
           text1: 'Error al obtener productos',
@@ -39,66 +54,62 @@ const BarDetailsScreen: React.FC = () => {
       }
     };
 
-    fetchProducts(); // Llamamos a la función al montar el componente
-    */
+    fetchProducts();
+  }, [bar_id, table_id]);
 
-    // Datos simulados mientras no esté disponible el backend
-    setProducts([
-      { id: '1', name: 'Cerveza Artesanal', price: 3500, image: 'https://via.placeholder.com/80' },
-      { id: '2', name: 'Pisco Sour', price: 4000, image: 'https://via.placeholder.com/80' },
-      { id: '3', name: 'Vino Tinto', price: 5000, image: 'https://via.placeholder.com/80' },
-    ]);
-
-    setQuantities({
-      '1': 0,
-      '2': 0,
-      '3': 0,
-    });
-  }, []);
-
-  const updateQuantity = (id: string, isIncrement: boolean) => {
+  const updateQuantity = (prodQuantId: string, isIncrement: boolean) => {
+    console.log(`Actualizando cantidad para el producto con id ${prodQuantId}. Incremento: ${isIncrement}`);
     setQuantities((prevQuantities) => {
-      const currentQuantity = prevQuantities[id] || 0;
-      const newQuantity = isIncrement ? currentQuantity + 1 : Math.max(0, currentQuantity - 1);
+      const currentQuantity = prevQuantities[prodQuantId] || 0;
+      const maxQuantity = products.find(product => product.product_id === prodQuantId)?.category === "Bebida" ? 15 : 8; // Limite según categoría
+      const newQuantity = isIncrement ? Math.min(currentQuantity + 1, maxQuantity) : Math.max(0, currentQuantity - 1);
 
-      // Recalculamos el total
+      // Recalcular el total
       const updatedTotal = products.reduce((acc, product) => {
-        const quantity = product.id === id ? newQuantity : prevQuantities[product.id];
-        return acc + product.price * quantity;
+        const quantity = product.product_id === prodQuantId ? newQuantity : prevQuantities[product.product_id];
+        return acc + parseFloat(product.price) * quantity; // Asegúrate de convertir a número
       }, 0);
+
+      console.log("Nuevo total calculado:", updatedTotal);
 
       setTotal(updatedTotal);
 
       return {
         ...prevQuantities,
-        [id]: newQuantity,
+        [prodQuantId]: newQuantity,
       };
     });
   };
 
   const handleRequestOrder = () => {
-    const selectedProducts = products.filter(product => quantities[product.id] > 0).map(product => ({
-      ...product,
-      quantity: quantities[product.id],
-    }));
+    console.log("Preparando pedido...");
+    const selectedProducts = products
+      .filter((product) => quantities[product.product_id] > 0)
+      .map((product) => ({
+        ...product,
+        quantity: quantities[product.product_id],
+      }));
+
+    console.log("Productos seleccionados:", selectedProducts);
 
     if (selectedProducts.length > 0) {
       const productsString = JSON.stringify(selectedProducts);
 
-      // Aquí llamamos al backend para enviar el pedido
-      /*
       const sendOrder = async () => {
         try {
-          const response = await axios.post('URL_BACKEND/orders', { 
+          console.log("Enviando pedido para la mesa con id:", table_id);
+          const response = await axios.post('http://10.0.2.2:3000/api/orders', {
             products: selectedProducts,
-            tableId: 'NUMERO_MESA', // Debes enviar también el número de mesa
+            table_id: table_id,
           });
+          console.log("Respuesta del servidor al enviar pedido:", response.data);
           Toast.show({
             type: 'success',
             text1: 'Pedido enviado',
             text2: 'Esperando confirmación del bar...',
           });
         } catch (error) {
+          console.error("Error al enviar el pedido:", error);
           Toast.show({
             type: 'error',
             text1: 'Error al enviar pedido',
@@ -107,15 +118,15 @@ const BarDetailsScreen: React.FC = () => {
         }
       };
 
-      sendOrder(); // Llamamos a la función para enviar el pedido
-      */
+      sendOrder();
 
       // Redirigir a la pantalla de confirmación
       router.push({
-        pathname: `/client/bar-details/[barId]/OrderSummaryScreen`,
-        params: { products: productsString },
+        pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
+        params: { products: productsString, table_id },
       });
     } else {
+      console.log("No hay productos seleccionados.");
       Toast.show({
         type: 'info',
         text1: 'No hay productos seleccionados',
@@ -127,7 +138,7 @@ const BarDetailsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.notificationContainer}>
-        <NotificationIcon hasNotification={hasNotification} onPress={() => router.push(`/client/bar-details/[barId]/manage-item`)} />
+        <NotificationIcon hasNotification={hasNotification} onPress={() => router.push(`/client/bar-details/[bar_id]/manage-item`)} />
       </View>
 
       <Text style={styles.title}>Productos del Bar</Text>
@@ -135,23 +146,23 @@ const BarDetailsScreen: React.FC = () => {
         data={products}
         renderItem={({ item }) => (
           <View style={styles.productCard}>
-            <Image source={{ uri: item.image }} style={styles.productImage} />
+            <Image source={{ uri: item.image_url }} style={styles.productImage} />
             <View style={styles.productInfo}>
               <Text style={styles.productName}>{item.name}</Text>
-              <Text style={styles.productPrice}>C/U ${item.price.toLocaleString()}</Text>
+              <Text style={styles.productPrice}>C/U ${parseFloat(item.price).toLocaleString()}</Text>
               <View style={styles.quantityContainer}>
                 <TouchableOpacity
                   style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.id, false)}
+                  onPress={() => updateQuantity(item.product_id, false)}
                 >
                   <Text style={styles.quantityButtonText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.quantity}>
-                  {quantities[item.id].toLocaleString('en-US', { minimumIntegerDigits: 2 })}
+                  {quantities[item.product_id].toLocaleString('en-US', { minimumIntegerDigits: 2 })}
                 </Text>
                 <TouchableOpacity
                   style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.id, true)}
+                  onPress={() => updateQuantity(item.product_id, true)}
                 >
                   <Text style={styles.quantityButtonText}>+</Text>
                 </TouchableOpacity>
@@ -159,13 +170,13 @@ const BarDetailsScreen: React.FC = () => {
               <View style={styles.subtotalContainer}>
                 <Text style={styles.subtotalLabel}>Subtotal</Text>
                 <Text style={styles.subtotalAmount}>
-                  ${(quantities[item.id] * item.price).toLocaleString()}
+                  ${(quantities[item.product_id] * parseFloat(item.price)).toLocaleString()}
                 </Text>
               </View>
             </View>
           </View>
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.product_id.toString()} // Usa product_id como clave
         contentContainerStyle={styles.list}
       />
 
@@ -181,6 +192,8 @@ const BarDetailsScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {

@@ -5,6 +5,7 @@ import SearchBar from '../../../components/CustomInput/SearchBar';
 import BarCard from '../../../components/Bar/BarCard';
 import BottomNavBar from '../../../components/Navigation/BottomNavBar';
 import { useRouter } from 'expo-router';
+import axios from 'axios'; // Asegúrate de tener axios instalado
 
 const RecommendationsScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -12,18 +13,22 @@ const RecommendationsScreen: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Datos simulados mientras no esté disponible el backend
-    setBarData([
-      { id: '1', name: 'Bar A', address: 'Av. Vitacura 3520', rating: 4.5, image: 'https://via.placeholder.com/80' },
-      { id: '2', name: 'Bar B', address: 'Av. Providencia 2120', rating: 4.0, image: 'https://via.placeholder.com/80' },
-      { id: '3', name: 'Bar C', address: 'Av. Los Leones 1010', rating: 4.8, image: 'https://via.placeholder.com/80' },
-    ]);
+    const fetchBarData = async () => {
+      try {
+        const response = await axios.get('http://10.0.2.2:3000/api/bars');
+        console.log("Datos de bares recibidos:", response.data);
+        setBarData(response.data);
+      } catch (error) {
+        console.error('Error al obtener los bares:', error);
+      }
+    };
+
+    fetchBarData();
   }, []);
 
-  const onSelectBar = (barId: string) => {
-    // Navega al escáner y pasa el barId como parámetro
-    router.push(`/client/scan?barId=${barId}`);
-    console.log("Navegando a escanear código QR para bar:", barId);
+  const onSelectBar = (bar_id: string) => {
+    router.push(`/client/scan?barId=${bar_id}`);
+    console.log("Navegando a escanear código QR para bar:", bar_id);
   };
 
   return (
@@ -34,19 +39,21 @@ const RecommendationsScreen: React.FC = () => {
         data={barData}
         renderItem={({ item }) => (
           <BarCard
-            name={item.name}
-            address={item.address}
-            rating={item.rating}
-            image={item.image}
+            name={item.business_name || 'Nombre no disponible'}
+            address={item.address || 'Dirección no disponible'}
+            rating={typeof item.rating === 'number' ? item.rating : 0}  // Pasamos 0 si no hay rating
+            image={item.image || 'https://via.placeholder.com/80'}
             onSelect={() => onSelectBar(item.id)}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.list}
       />
       <BottomNavBar />
     </SafeAreaView>
   );
+  
+  
 };
 
 const styles = StyleSheet.create({

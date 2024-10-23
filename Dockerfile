@@ -1,20 +1,21 @@
-# Usa una imagen oficial de Node.js (versión v21.6.0)
-FROM node:21.6.0
+# Usa una versión estable de Node.js (LTS)
+FROM node:16-alpine
 
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copia el archivo package.json y package-lock.json al contenedor
+# Copia los archivos package.json y package-lock.json al contenedor
 COPY package*.json ./
 
-# Instala Expo CLI y las dependencias necesarias con versiones específicas
-RUN npm install -g expo-cli@6.0.8 && npm install
+# Instala todas las dependencias del proyecto (incluyendo Expo)
+RUN npm install
 
-# Copia todo el código de la aplicación al contenedor
+# Copia todo el código fuente al contenedor
 COPY . .
 
-# Expone el puerto que utiliza Expo (8081 por defecto)
-EXPOSE 8081
+# Expone el puerto que Expo usa (19000)
+EXPOSE 19000
 
-# Comando para iniciar la aplicación con Expo
-CMD ["npx", "expo", "start", "--tunnel"]
+# Comando para iniciar Expo con túnel
+CMD ["npm", "run", "start",  "--tunnel"]
+

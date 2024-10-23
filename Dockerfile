@@ -1,6 +1,9 @@
 # Usa una versión estable de Node.js (LTS)
 FROM node:16-alpine
 
+# Instala git
+RUN apk update && apk add git
+
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
@@ -18,4 +21,3 @@ EXPOSE 19000
 
 # Comando para iniciar Expo con túnel
 CMD ["npm", "run", "start",  "--tunnel"]
-

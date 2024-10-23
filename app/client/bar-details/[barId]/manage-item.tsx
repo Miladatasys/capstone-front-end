@@ -1,167 +1,137 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
+interface Notification {
+  id: string;
+  message: string;
+  type: 'product-unavailable' | 'order-adjusted';
+}
+
 const ManageItemScreen: React.FC = () => {
+  const { barId } = useLocalSearchParams();
   const router = useRouter();
-  const { barId, itemId, tableNumber } = useLocalSearchParams(); // Ahora obtenemos el barId, itemId y número de mesa
-  const [comment, setComment] = useState<string>('');
-  const [selectedAction, setSelectedAction] = useState<string | null>(null); // Para manejar la acción seleccionada
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Manejo de selección de acción
-  const handleActionSelect = (action: string) => {
-    setSelectedAction(action);
+  useEffect(() => {
+    // Simulación de notificaciones (en la vida real esto se conectaría con el backend)
+    setTimeout(() => {
+      const simulatedNotifications: Notification[] = [
+        {
+          id: '1',
+          message: 'El producto "Cerveza Artesanal" ya no está disponible.',
+          type: 'product-unavailable',
+        },
+        {
+          id: '2',
+          message: 'El pedido ha sido ajustado por el bar debido a cambios en la disponibilidad.',
+          type: 'order-adjusted',
+        },
+      ];
+      setNotifications(simulatedNotifications);
+      setLoading(false);
+    }, 2000);
+
+    // Aquí se podría hacer una llamada al backend para obtener las notificaciones reales
+    /*
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get(`URL_BACKEND/notifications/${barId}`);
+        setNotifications(response.data);
+        setLoading(false);
+      } catch (error) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'No se pudieron cargar las notificaciones.',
+        });
+      }
+    };
+
+    fetchNotifications();
+    */
+  }, [barId]);
+
+  const handleViewOrder = () => {
+    router.push(`/client/bar-details/${barId}/OrderSummaryScreen`);
   };
 
-  // Función para notificar al bar con la acción seleccionada
-  const handleNotifyBar = () => {
-    if (!selectedAction) {
-      Toast.show({
-        type: 'error',
-        text1: 'Acción no seleccionada',
-        text2: 'Por favor selecciona una opción para continuar.',
-        position: 'bottom',
-      });
-      return;
-    }
+  const renderNotification = ({ item }: { item: Notification }) => (
+    <View style={styles.notificationCard}>
+      <Text style={styles.notificationText}>{item.message}</Text>
+      {item.type === 'order-adjusted' && (
+        <TouchableOpacity style={styles.button} onPress={handleViewOrder}>
+          <Text style={styles.buttonText}>Ver Pedido Ajustado</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 
-    if (selectedAction === 'sustituir') {
-      // Redirigir al cliente a la pantalla de productos (bar-details) para elegir el sustituto
-      router.push(`/client/bar-details/${barId}?itemId=${itemId}&tableNumber=${tableNumber}&action=sustituir`);
-    } else {
-      // Notificar eliminación directamente
-      Toast.show({
-        type: 'success',
-        text1: 'Notificación enviada',
-        text2: 'El producto ha sido eliminado del pedido.',
-        position: 'bottom',
-      });
-
-      // Aquí iría la integración con el backend para la eliminación del producto
-      setTimeout(() => {
-        router.push(`/client/bar-details/${barId}`);
-      }, 1500);
-    }
-  };
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <Text>Cargando notificaciones...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => router.back()}>
-        <Text style={styles.backButton}>Anterior</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.unavailableLabel}>❌ Item no Disponible</Text>
-      <Text style={styles.tableNumberText}>Número de Mesa: {tableNumber}</Text>
-
-      {/* Gestión de Ítem */}
-      <View style={styles.dropdown}>
-        <TouchableOpacity
-          onPress={() => handleActionSelect('sustituir')}
-          style={[styles.dropdownOption, selectedAction === 'sustituir' && styles.selectedOption]}
-        >
-          <Text style={styles.dropdownText}>Sustituir Item</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => handleActionSelect('eliminar')}
-          style={[styles.dropdownOption, selectedAction === 'eliminar' && styles.selectedOption]}
-        >
-          <Text style={styles.dropdownText}>Eliminar Item</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Campo de Comentario */}
-      <View style={styles.commentContainer}>
-        <Text style={styles.commentLabel}>Notas Adicionales (Opcional)</Text>
-        <TextInput
-          style={styles.commentInput}
-          placeholder="Comentario"
-          value={comment}
-          onChangeText={setComment}
-          multiline
-        />
-      </View>
-
-      {/* Botón para Notificar al Bar */}
-      <TouchableOpacity style={styles.notifyButton} onPress={handleNotifyBar}>
-        <Text style={styles.notifyButtonText}>Notificar a Bar</Text>
-      </TouchableOpacity>
-
-      {/* Mostrar Toast para feedback visual */}
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={notifications}
+        renderItem={renderNotification}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={<Text style={styles.noNotificationsText}>No tienes notificaciones nuevas.</Text>}
+      />
       <Toast />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#fff',
+    padding: 20,
   },
-  backButton: {
-    fontSize: 18,
-    color: '#EF233C',
-    marginBottom: 16,
-    padding: 8,
-    backgroundColor: '#E0E0E0',
+  notificationCard: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
     borderRadius: 8,
-    textAlign: 'center',
+    marginBottom: 10,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  unavailableLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#EF233C',
-    marginBottom: 16,
-  },
-  tableNumberText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  dropdown: {
-    marginBottom: 20,
-  },
-  dropdownOption: {
-    padding: 16,
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-    marginVertical: 4,
-  },
-  selectedOption: {
-    backgroundColor: '#D3D3D3',
-  },
-  dropdownText: {
+  notificationText: {
     fontSize: 16,
     color: '#333',
   },
-  commentContainer: {
-    marginBottom: 20,
-  },
-  commentLabel: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  commentInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    height: 60,
-    textAlignVertical: 'top',
-  },
-  notifyButton: {
+  button: {
+    marginTop: 10,
     backgroundColor: '#EF233C',
-    padding: 16,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 5,
     alignItems: 'center',
   },
-  notifyButtonText: {
+  buttonText: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noNotificationsText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#666',
   },
 });
 

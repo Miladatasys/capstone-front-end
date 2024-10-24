@@ -27,6 +27,7 @@ const ClientSignUpScreen: React.FC = () => {
     }
 
     // Validación de coincidencia de contraseñas
+    console.log(`Password: "${password}", Confirm Password: "${confirmPassword}"`); // Para depuración
     if (password !== confirmPassword) {
       Toast.show({
         type: 'error',
@@ -44,6 +45,7 @@ const ClientSignUpScreen: React.FC = () => {
         first_name: username,
         email,
         password,
+        confirmPassword
       });
 
       if (response.status === 201) {

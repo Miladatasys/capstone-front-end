@@ -1,5 +1,5 @@
-# Usa una versión estable de Node.js (LTS)
-FROM node:16-alpine
+# Usa una versión estable de Node.js 18 (LTS)
+FROM node:18-alpine
 
 # Instala git
 RUN apk update && apk add git
@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 19000
 
 # Comando para iniciar Expo con túnel
-CMD ["npm", "run", "start",  "--tunnel"]
+CMD ["npm", "run", "start", "--tunnel"]

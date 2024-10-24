@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet, ScrollView, Text, Pressable } from 'react-native';
+import { View, Image, StyleSheet, ScrollView, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from "expo-router";
 import Toast from 'react-native-toast-message';
-import axios from 'axios'; // Ahora habilitado para hacer la integración con el backend
+import axios from 'axios';
 import Logo from '../../../assets/images/Logo_2.png';
 import ClientCustomInput from '../../../components/CustomInput/ClientCustomInput';
 import ClientCustomButton from '../../../components/CustomButton/ClientCustomButton';
@@ -10,10 +10,12 @@ import ClientCustomButton from '../../../components/CustomButton/ClientCustomBut
 const ClientSignInScreen: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
   // Validar y proceder con la navegación a la pantalla de Recomendados
   const onClientSignInPressed = async () => {
+    // Validación en el frontend
     if (username.trim() === '' || password.trim() === '') {
       Toast.show({
         type: 'error',
@@ -22,6 +24,8 @@ const ClientSignInScreen: React.FC = () => {
       });
       return;
     }
+
+    setLoading(true); // Mostrar el indicador de carga mientras se hace la solicitud
 
     try {
       // Realiza la solicitud al backend para autenticar al usuario
@@ -38,11 +42,11 @@ const ClientSignInScreen: React.FC = () => {
           text2: 'Bienvenido de nuevo!',
         });
 
-        // Almacena el token JWT si es necesario
+        // Almacenar el token JWT si es necesario
         const token = response.data.token;
         // Puedes almacenar el token usando AsyncStorage o algún método similar
 
-        // Navega a la pantalla de Recomendaciones
+        // Navegar a la pantalla de Recomendaciones
         router.push("/client/recommendations/RecommendationsScreen");
       }
     } catch (error) {
@@ -52,6 +56,8 @@ const ClientSignInScreen: React.FC = () => {
         text1: 'Error de Inicio de Sesión',
         text2: error.response?.data?.message || 'Nombre de usuario o contraseña incorrectos.',
       });
+    } finally {
+      setLoading(false); // Quitar el indicador de carga
     }
   };
 
@@ -64,7 +70,6 @@ const ClientSignInScreen: React.FC = () => {
   };
 
   const onBarSignInPressed = () => {
-    // Navegar a la pantalla de login para el usuario bar
     router.push("/bar/auth/BarSignInScreen");
   };
 
@@ -85,11 +90,15 @@ const ClientSignInScreen: React.FC = () => {
           secureTextEntry={true}
         />
 
-        <ClientCustomButton
-          text="Iniciar Sesión"
-          onPress={onClientSignInPressed}
-        />
-        
+        {loading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : (
+          <ClientCustomButton
+            text="Iniciar Sesión"
+            onPress={onClientSignInPressed}
+          />
+        )}
+
         <ClientCustomButton
           text="Olvidé mi Contraseña"
           onPress={onClientForgotPasswordPressed}
@@ -103,12 +112,10 @@ const ClientSignInScreen: React.FC = () => {
         />
       </View>
 
-      {/* Botón minimalista para iniciar como Bar */}
       <Pressable onPress={onBarSignInPressed} style={styles.barSignInButton}>
         <Text style={styles.barSignInText}>Iniciar como Bar</Text>
       </Pressable>
 
-      {/* Mostrar Toast para toda la pantalla */}
       <Toast />
     </ScrollView>
   );

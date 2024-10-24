@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet, ScrollView, Text } from 'react-native';
+import { View, Image, StyleSheet, ScrollView, Text, ActivityIndicator } from 'react-native';
 import { useRouter } from "expo-router";
 import Logo from '../../../assets/images/Logo_2.png';
 import ClientCustomInput from '../../../components/CustomInput/ClientCustomInput';
 import ClientCustomButton from '../../../components/CustomButton/ClientCustomButton';
 import Toast from 'react-native-toast-message';
-import axios from 'axios'; // Descomentado para la integración con el backend
+import axios from 'axios';
 
 const ClientSignUpScreen: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
   const onRegisterPressed = async () => {
+    // Validación básica de los campos vacíos
     if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       Toast.show({
         type: 'error',
@@ -24,8 +26,8 @@ const ClientSignUpScreen: React.FC = () => {
       return;
     }
 
+    // Validación de coincidencia de contraseñas
     if (password !== confirmPassword) {
-      // Mostrar mensaje Toast de error si las contraseñas no coinciden
       Toast.show({
         type: 'error',
         text1: 'Error de Registro',
@@ -34,16 +36,16 @@ const ClientSignUpScreen: React.FC = () => {
       return;
     }
 
-    // Integración con el backend para registrar el usuario
+    setLoading(true); // Mostrar indicador de carga
+
     try {
+      // Realizar la solicitud al backend para registrar al usuario
       const response = await axios.post('http://10.0.2.2:3000/api/register-consumer', {
         first_name: username,
         email,
         password,
-        confirmPassword,
       });
 
-      // Si el registro es exitoso
       if (response.status === 201) {
         Toast.show({
           type: 'success',
@@ -51,26 +53,26 @@ const ClientSignUpScreen: React.FC = () => {
           text2: 'Te has registrado correctamente.',
         });
 
-        // Redirigir al usuario a iniciar sesión después de mostrar el Toast de éxito
+        // Redirigir al inicio de sesión después de un breve delay
         setTimeout(() => {
           router.push("/client/auth/ClientSignInScreen");
-        }, 2000); // Esperar 2 segundos antes de redirigir
+        }, 2000);
       }
     } catch (error) {
-      // Mostrar un Toast en caso de error con el registro
+      // Manejo detallado de errores
       Toast.show({
         type: 'error',
         text1: 'Error de Registro',
-        text2: error.response?.data?.message || 'Ocurrió un error al intentar registrarse.',
+        text2: error.response?.data?.message || 'Ocurrió un error al intentar registrarse. Por favor, inténtalo de nuevo.',
       });
+    } finally {
+      setLoading(false); // Ocultar indicador de carga
     }
   };
 
   const onSignInPressed = () => {
     router.push("/client/auth/ClientSignInScreen");
   };
-
-
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
@@ -101,10 +103,14 @@ const ClientSignUpScreen: React.FC = () => {
           secureTextEntry={true}
         />
 
-        <ClientCustomButton
-          text="Registrarse"
-          onPress={onRegisterPressed}
-        />
+        {loading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : (
+          <ClientCustomButton
+            text="Registrarse"
+            onPress={onRegisterPressed}
+          />
+        )}
 
         <ClientCustomButton
           text="¿Ya tienes una cuenta? Inicia sesión"
@@ -113,7 +119,6 @@ const ClientSignUpScreen: React.FC = () => {
         />
       </View>
 
-      {/* Mostrar Toast para toda la pantalla */}
       <Toast />
     </ScrollView>
   );

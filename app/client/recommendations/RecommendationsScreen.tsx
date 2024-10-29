@@ -5,7 +5,9 @@ import SearchBar from '../../../components/CustomInput/SearchBar';
 import BarCard from '../../../components/Bar/BarCard';
 import BottomNavBar from '../../../components/Navigation/BottomNavBar';
 import { useRouter } from 'expo-router';
-import axios from 'axios'; // Asegúrate de tener axios instalado
+import axios from 'axios'; 
+import { API_URL } from '@env';
+
 
 const RecommendationsScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -15,8 +17,9 @@ const RecommendationsScreen: React.FC = () => {
   useEffect(() => {
     const fetchBarData = async () => {
       try {
-        const response = await axios.get('http://10.0.2.2:3000/api/bars');
-        console.log("Datos de bares recibidos:", response.data);
+          // Realiza la solicitud al backend para obtener la lista de bares
+          const response = await axios.get(`${API_URL}/api/bars`);
+          console.log("Datos de bares recibidos:", response.data);
         setBarData(response.data);
       } catch (error) {
         console.error('Error al obtener los bares:', error);

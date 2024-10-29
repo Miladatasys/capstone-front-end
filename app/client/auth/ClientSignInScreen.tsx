@@ -6,6 +6,7 @@ import axios from 'axios';
 import Logo from '../../../assets/images/Logo_2.png';
 import ClientCustomInput from '../../../components/CustomInput/ClientCustomInput';
 import ClientCustomButton from '../../../components/CustomButton/ClientCustomButton';
+import { API_URL } from '@env';
 
 const ClientSignInScreen: React.FC = () => {
   const [username, setUsername] = useState<string>('');
@@ -29,10 +30,11 @@ const ClientSignInScreen: React.FC = () => {
 
     try {
       // Realiza la solicitud al backend para autenticar al usuario
-      const response = await axios.post('http://10.0.2.2:3000/api/login', {
+      const response = await axios.post(`${API_URL}/api/login`, {
         email: username,
         password,
       });
+      
 
       // Si el inicio de sesión es exitoso
       if (response.status === 200) {

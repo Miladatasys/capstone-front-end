@@ -6,6 +6,8 @@ import ClientCustomInput from '../../../components/CustomInput/ClientCustomInput
 import ClientCustomButton from '../../../components/CustomButton/ClientCustomButton';
 import Toast from 'react-native-toast-message';
 import axios from 'axios';
+import { API_URL } from '@env';
+
 
 const ClientSignUpScreen: React.FC = () => {
   const [username, setUsername] = useState<string>('');
@@ -41,7 +43,7 @@ const ClientSignUpScreen: React.FC = () => {
 
     try {
       // Realizar la solicitud al backend para registrar al usuario
-      const response = await axios.post('http://10.0.2.2:3000/api/register-consumer', {
+      const response = await axios.post(`${API_URL}/api/register-consumer`, {
         first_name: username,
         email,
         password,

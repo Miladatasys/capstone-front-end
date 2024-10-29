@@ -5,6 +5,8 @@ import NotificationIcon from '../../../../components/Notification/NotificationIc
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import axios from 'axios';
+import { API_URL } from '@env';
+
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
@@ -31,11 +33,9 @@ const BarDetailsScreen: React.FC = () => {
     const fetchProducts = async () => {
       try {
         console.log("Obteniendo productos del bar con id:", bar_id);
-        const response = await axios.get(`http://10.0.2.2:3000/api/bars/${bar_id}/products`);
+        const response = await axios.get(`${API_URL}/api/bars/${bar_id}/products`);
         console.log("Productos recibidos:", response.data);
         setProducts(response.data);
-        // Aquí se cae
-
 
         const initialQuantities = {};
         console.log(initialQuantities)
@@ -84,11 +84,12 @@ const BarDetailsScreen: React.FC = () => {
   const handleRequestOrder = () => {
     console.log("Preparando pedido...");
     const selectedProducts = products
-      .filter((product) => quantities[product.product_id] > 0)
-      .map((product) => ({
-        ...product,
-        quantity: quantities[product.product_id],
-      }));
+    .filter((product) => quantities[product.product_id] > 0 && product.availability)
+    .map((product) => ({
+      ...product,
+      quantity: quantities[product.product_id],
+    }));
+  
 
     console.log("Productos seleccionados:", selectedProducts);
 
@@ -98,7 +99,7 @@ const BarDetailsScreen: React.FC = () => {
       const sendOrder = async () => {
         try {
           console.log("Enviando pedido para la mesa con id:", table_id);
-          const response = await axios.post('http://10.0.2.2:3000/api/orders', {
+          const response = await axios.post('http://192.168.1.90:3000/api/orders', {
             products: selectedProducts,
             table_id: table_id,
           });
@@ -158,8 +159,9 @@ const BarDetailsScreen: React.FC = () => {
                   <Text style={styles.quantityButtonText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.quantity}>
-                  {quantities[item.product_id].toLocaleString('en-US', { minimumIntegerDigits: 2 })}
+                  {(quantities[item.product_id] !== undefined ? quantities[item.product_id] : 0).toLocaleString('en-US', { minimumIntegerDigits: 2 })}
                 </Text>
+
                 <TouchableOpacity
                   style={styles.quantityButton}
                   onPress={() => updateQuantity(item.product_id, true)}

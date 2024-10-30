@@ -84,11 +84,13 @@ const BarDetailsScreen: React.FC = () => {
   const handleRequestOrder = () => {
     console.log("Preparando pedido...");
     const selectedProducts = products
-    .filter((product) => quantities[product.product_id] > 0 && product.availability)
-    .map((product) => ({
-      ...product,
-      quantity: quantities[product.product_id],
-    }));
+      .filter((product) => quantities[product.product_id] > 0)
+      .map((product) => ({
+        product_id: product.product_id,
+        quantity: quantities[product.product_id],
+        price: product.price, 
+      }));
+
   
 
     console.log("Productos seleccionados:", selectedProducts);
@@ -99,7 +101,7 @@ const BarDetailsScreen: React.FC = () => {
       const sendOrder = async () => {
         try {
           console.log("Enviando pedido para la mesa con id:", table_id);
-          const response = await axios.post('http://192.168.1.90:3000/api/orders', {
+          const response = await axios.post(`${API_URL}/api/orders`, {
             products: selectedProducts,
             table_id: table_id,
           });

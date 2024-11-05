@@ -1,32 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
+// import axios from 'axios'; // Descomentar cuando se vaya a usar con el backend
+// import { API_URL } from '@env'; // Descomentar cuando se vaya a usar con el backend
 
 interface Product {
   id: string;
   name: string;
   price: number;
-  quantity: number;
-  image: string;
+  quantity: number; // cantidad disponible actualmente
+  originalQuantity?: number; // cantidad solicitada originalmente por el cliente
   available: boolean;
 }
 
 const OrderSummaryScreen: React.FC = () => {
   const router = useRouter();
-  const { products: productsParam } = useLocalSearchParams();
+  const { products: productsParam, table_id } = useLocalSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isOrderConfirmed, setIsOrderConfirmed] = useState<boolean | null>(null);
+  const [originalTotal, setOriginalTotal] = useState<number | null>(null);
 
   useEffect(() => {
+    // Comentar este bloque cuando se vaya a usar el backend
     if (typeof productsParam === 'string') {
       try {
         const parsedProducts = JSON.parse(productsParam);
         if (Array.isArray(parsedProducts)) {
           setProducts(parsedProducts);
+          calculateOriginalTotal(parsedProducts);
         } else {
           Toast.show({
             type: 'error',
@@ -41,93 +44,134 @@ const OrderSummaryScreen: React.FC = () => {
           text2: `No se pudieron cargar los productos correctamente. ${error.message}`,
         });
       }
-    } else {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'El parámetro de productos no es válido o está vacío.',
-      });
     }
-  }, [productsParam]);
+
+    // Código para obtener productos desde el backend (descomentar para habilitar)
+    /*
+    const fetchOrderDetails = async () => {
+      try {
+        console.log("Obteniendo detalles del pedido para la mesa con id:", table_id);
+        const response = await axios.get(`${API_URL}/api/orders/${table_id}`);
+        const orderDetails = response.data;
+        setProducts(orderDetails.products);
+        calculateOriginalTotal(orderDetails.products);
+      } catch (error) {
+        console.error("Error al obtener los detalles del pedido:", error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error al obtener detalles del pedido',
+          text2: 'No se pudieron cargar los detalles del pedido desde el backend.',
+        });
+      }
+    };
+
+    fetchOrderDetails();
+    */
+  }, [productsParam, table_id]);
 
   useEffect(() => {
     calculateTotal();
   }, [products]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      const orderConfirmed = Math.random() > 0.5; // Simulación
-      setIsOrderConfirmed(orderConfirmed);
-      setIsLoading(false);
-    }, 5000);
-  }, []);
+  const calculateOriginalTotal = (products: Product[]) => {
+    const totalValue = products.reduce((total, product) => total + product.price * (product.originalQuantity || product.quantity), 0);
+    setOriginalTotal(totalValue);
+  };
 
   const calculateTotal = () => {
     const totalValue = products.reduce((total, product) => total + product.price * product.quantity, 0);
     setTotal(totalValue);
   };
 
-  const handleProceedToPayment = () => {
+  const handleConfirmOrder = () => {
+    Toast.show({
+      type: 'success',
+      text1: 'Pedido Confirmado',
+      text2: 'Procediendo al pago...',
+    });
     router.push(`/client/bar-details/[barId]/PaymentMethodScreen`);
   };
 
-  const handleModifyOrder = () => {
-    router.back();
-  };
-
-  const handleAcceptInconvenience = () => {
+  const handleCancelOrder = () => {
     Toast.show({
       type: 'info',
-      text1: 'Inconveniente aceptado',
-      text2: 'Se procederá con el pedido modificado.',
+      text1: 'Pedido Cancelado',
+      text2: 'Has cancelado el pedido.',
     });
-    handleProceedToPayment();
+    router.back();
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Resumen del Pedido</Text>
+
       <FlatList
         data={products}
-        ListHeaderComponent={<Text style={styles.title}>Resumen del Pedido</Text>}
         renderItem={({ item }) => (
           <View style={styles.productCard}>
             <View style={styles.productInfo}>
               <Text style={styles.productName}>{item.name}</Text>
-              <Text style={styles.productDetails}>
-                C/U ${item.price.toLocaleString()} x {item.quantity.toString().padStart(2, '0')} unidades
-              </Text>
-              <Text style={styles.subtotal}>Subtotal: ${(item.price * item.quantity).toLocaleString()}</Text>
+              <Text style={styles.productPrice}>C/U ${item.price.toLocaleString()}</Text>
+              <View style={styles.row}>
+                {/* Mostrar "Antes" y "Después" si falta cantidad o está marcado como no disponible */}
+                {(!item.available || item.quantity < (item.originalQuantity || 0)) ? (
+                  <>
+                    <View style={[styles.column, styles.alignLeft]}>
+                      <Text style={styles.columnTitle}>Antes</Text>
+                      <Text style={styles.strikeThrough}>
+                        {item.originalQuantity} unidades
+                      </Text>
+                      <Text style={styles.strikeThrough}>
+                        Subtotal: ${(item.price * item.originalQuantity!).toLocaleString()}
+                      </Text>
+                    </View>
+                    <View style={[styles.column, styles.alignRight]}>
+                      <Text style={styles.columnTitle}>Después</Text>
+                      <Text>
+                        {item.quantity} unidades
+                      </Text>
+                      <Text>
+                        Subtotal: ${(item.price * item.quantity).toLocaleString()}
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <View style={[styles.column, styles.alignRight]}>
+                    <Text>{item.quantity} unidades</Text>
+                    <Text>Subtotal: ${(item.price * item.quantity).toLocaleString()}</Text>
+                  </View>
+                )}
+              </View>
             </View>
             <View style={styles.productIcon}>
-              <Ionicons name="checkmark-circle" size={24} color={item.available ? "green" : "red"} />
+              <Ionicons name={item.available ? "checkmark-circle" : "close-circle"} size={24} color={item.available ? "green" : "red"} />
             </View>
           </View>
         )}
         keyExtractor={(item) => item.id}
-        ListFooterComponent={
-          <View style={styles.footer}>
-            <Text style={styles.totalText}>Total: ${total.toLocaleString()}</Text>
-
-            {isLoading ? (
-              <ActivityIndicator size="large" color="#EF233C" />
-            ) : isOrderConfirmed ? (
-              <Pressable style={styles.confirmButton} onPress={handleProceedToPayment}>
-                <Text style={styles.confirmButtonText}>✅ Pedido Confirmado - Proceder al Pago</Text>
-              </Pressable>
-            ) : (
-              <View>
-                <Text style={styles.errorText}>⚠️ Inconveniente con el Pedido</Text>
-                <Pressable style={styles.modifyButton} onPress={handleModifyOrder}>
-                  <Text style={styles.modifyButtonText}>Modificar Pedido</Text>
-                </Pressable>
-                <Pressable style={styles.acceptButton} onPress={handleAcceptInconvenience}>
-                  <Text style={styles.acceptButtonText}>Aceptar Inconveniente y Continuar</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        }
       />
+
+      <View style={styles.footer}>
+        <View style={styles.row}>
+          <View style={[styles.column, styles.alignLeft]}>
+            <Text style={styles.totalText}>
+              <Text style={styles.strikeThrough}>Total: ${originalTotal?.toLocaleString()}</Text>
+            </Text>
+          </View>
+          <View style={[styles.column, styles.alignRight]}>
+            <Text style={styles.totalText}>Total: ${total.toLocaleString()}</Text>
+          </View>
+        </View>
+        <View style={styles.buttonContainer}>
+          <Pressable style={styles.confirmButton} onPress={handleConfirmOrder}>
+            <Text style={styles.confirmButtonText}>Aceptar</Text>
+          </Pressable>
+          <Pressable style={styles.cancelButton} onPress={handleCancelOrder}>
+            <Text style={styles.cancelButtonText}>Modificar</Text>
+          </Pressable>
+        </View>
+      </View>
+
       <Toast />
     </SafeAreaView>
   );
@@ -137,12 +181,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9f9f9',
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    margin: 20,
     color: '#2B2D42',
+    marginVertical: 20,
+    textAlign: 'center',
   },
   productCard: {
     flexDirection: 'row',
@@ -152,10 +198,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 10,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   productInfo: {
     flex: 1,
@@ -169,83 +211,75 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2B2D42',
   },
-  productDetails: {
+  productPrice: {
     fontSize: 16,
-    color: '#666',
-    marginVertical: 4,
+    color: '#888',
   },
-  subtotal: {
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  column: {
+    flex: 1,
+  },
+  alignLeft: {
+    alignItems: 'flex-start',
+  },
+  alignRight: {
+    alignItems: 'flex-end',
+  },
+  columnTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2B2D42',
-    marginTop: 4,
+    color: '#666',
+    marginBottom: 4,
+  },
+  strikeThrough: {
+    textDecorationLine: 'line-through',
+    color: '#C71F33',
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
     borderTopWidth: 1,
     borderTopColor: '#ddd',
+    paddingVertical: 20,
+    paddingHorizontal: 10,
     backgroundColor: '#fff',
-    marginBottom: 15,
   },
   totalText: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#2B2D42',
     marginBottom: 15,
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
   confirmButton: {
-    backgroundColor: '#3cb043', // Cambiado a gris
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 30,
     borderRadius: 5,
     alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 20, 
   },
   confirmButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 8, 
   },
-  errorText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#C71F33',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  modifyButton: {
+  cancelButton: {
     backgroundColor: '#888',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 30,
     borderRadius: 5,
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 10, 
   },
-  modifyButtonText: {
+  cancelButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 8, 
-  },
-  acceptButton: {
-    backgroundColor: '#4CAF50', // Verde para aceptar inconvenientes
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  acceptButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 8, 
   },
 });
 

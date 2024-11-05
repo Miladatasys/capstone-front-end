@@ -16,7 +16,6 @@ const ClientSignInScreen: React.FC = () => {
 
   // Validar y proceder con la navegación a la pantalla de Recomendados
   const onClientSignInPressed = async () => {
-    // Validación en el frontend
     if (username.trim() === '' || password.trim() === '') {
       Toast.show({
         type: 'error',
@@ -25,17 +24,17 @@ const ClientSignInScreen: React.FC = () => {
       });
       return;
     }
-
-    setLoading(true); // Mostrar el indicador de carga mientras se hace la solicitud
-
+  
+    setLoading(true);
+  
     try {
       // Realiza la solicitud al backend para autenticar al usuario
       const response = await axios.post(`${API_URL}/api/login`, {
         email: username,
         password,
       });
-      
-
+      console.log(response.data); // Log para verificar la respuesta
+  
       // Si el inicio de sesión es exitoso
       if (response.status === 200) {
         Toast.show({
@@ -43,23 +42,24 @@ const ClientSignInScreen: React.FC = () => {
           text1: 'Inicio de Sesión Exitoso',
           text2: 'Bienvenido de nuevo!',
         });
-
+  
         // Almacenar el token JWT si es necesario
         const token = response.data.token;
         // Puedes almacenar el token usando AsyncStorage o algún método similar
-
+  
         // Navegar a la pantalla de Recomendaciones
         router.push("/client/recommendations/RecommendationsScreen");
       }
     } catch (error) {
       // Mostrar un Toast en caso de error con el inicio de sesión
+      console.error('Error al realizar la solicitud:', error); // Log para ver el error completo
       Toast.show({
         type: 'error',
         text1: 'Error de Inicio de Sesión',
         text2: error.response?.data?.message || 'Nombre de usuario o contraseña incorrectos.',
       });
     } finally {
-      setLoading(false); // Quitar el indicador de carga
+      setLoading(false);
     }
   };
 

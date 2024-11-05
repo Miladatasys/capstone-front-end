@@ -10,14 +10,14 @@ import { API_URL } from '@env';
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
-  const { bar_id, table_id } = useLocalSearchParams(); // Asegúrate de que estás recibiendo correctamente bar_id y table_id
+  const { bar_id, table_id } = useLocalSearchParams(); // VERIFICAR SI SE RECIBE correctamente bar_id y table_id
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
   const [hasNotification, setHasNotification] = useState(false);
 
   useEffect(() => {
-    console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id }); // Verifica si los parámetros se reciben correctamente
+    console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id }); 
 
     if (!bar_id) {
       console.error("Error: El bar_id no fue proporcionado.");
@@ -67,7 +67,7 @@ const BarDetailsScreen: React.FC = () => {
       // Recalcular el total
       const updatedTotal = products.reduce((acc, product) => {
         const quantity = product.product_id === prodQuantId ? newQuantity : prevQuantities[product.product_id];
-        return acc + parseFloat(product.price) * quantity; // Asegúrate de convertir a número
+        return acc + parseFloat(product.price) * quantity; // convertir a número
       }, 0);
 
       console.log("Nuevo total calculado:", updatedTotal);
@@ -86,18 +86,19 @@ const BarDetailsScreen: React.FC = () => {
     const selectedProducts = products
       .filter((product) => quantities[product.product_id] > 0)
       .map((product) => ({
-        product_id: product.product_id,
+        id: product.product_id,
+        name: product.name,
+        price: parseFloat(product.price),
         quantity: quantities[product.product_id],
-        price: product.price, 
+        originalQuantity: quantities[product.product_id], // Almacena la cantidad original solicitada
+        available: product.availability,
       }));
-
   
-
     console.log("Productos seleccionados:", selectedProducts);
-
+  
     if (selectedProducts.length > 0) {
       const productsString = JSON.stringify(selectedProducts);
-
+  
       const sendOrder = async () => {
         try {
           console.log("Enviando pedido para la mesa con id:", table_id);
@@ -120,9 +121,9 @@ const BarDetailsScreen: React.FC = () => {
           });
         }
       };
-
+  
       sendOrder();
-
+  
       // Redirigir a la pantalla de confirmación
       router.push({
         pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,

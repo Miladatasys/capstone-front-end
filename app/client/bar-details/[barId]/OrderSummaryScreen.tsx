@@ -10,8 +10,8 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  quantity: number; // cantidad disponible actualmente
-  originalQuantity?: number; // cantidad solicitada originalmente por el cliente
+  quantity: number;
+  originalQuantity?: number;
   available: boolean;
 }
 
@@ -23,7 +23,6 @@ const OrderSummaryScreen: React.FC = () => {
   const [originalTotal, setOriginalTotal] = useState<number | null>(null);
 
   useEffect(() => {
-    // Comentar este bloque cuando se vaya a usar el backend
     if (typeof productsParam === 'string') {
       try {
         const parsedProducts = JSON.parse(productsParam);
@@ -45,28 +44,6 @@ const OrderSummaryScreen: React.FC = () => {
         });
       }
     }
-
-    // Código para obtener productos desde el backend (descomentar para habilitar)
-    /*
-    const fetchOrderDetails = async () => {
-      try {
-        console.log("Obteniendo detalles del pedido para la mesa con id:", table_id);
-        const response = await axios.get(`${API_URL}/api/orders/${table_id}`);
-        const orderDetails = response.data;
-        setProducts(orderDetails.products);
-        calculateOriginalTotal(orderDetails.products);
-      } catch (error) {
-        console.error("Error al obtener los detalles del pedido:", error);
-        Toast.show({
-          type: 'error',
-          text1: 'Error al obtener detalles del pedido',
-          text2: 'No se pudieron cargar los detalles del pedido desde el backend.',
-        });
-      }
-    };
-
-    fetchOrderDetails();
-    */
   }, [productsParam, table_id]);
 
   useEffect(() => {
@@ -79,7 +56,9 @@ const OrderSummaryScreen: React.FC = () => {
   };
 
   const calculateTotal = () => {
-    const totalValue = products.reduce((total, product) => total + product.price * product.quantity, 0);
+    const totalValue = products
+      .filter((product) => product.available)
+      .reduce((total, product) => total + product.price * product.quantity, 0);
     setTotal(totalValue);
   };
 
@@ -113,34 +92,28 @@ const OrderSummaryScreen: React.FC = () => {
               <Text style={styles.productName}>{item.name}</Text>
               <Text style={styles.productPrice}>C/U ${item.price.toLocaleString()}</Text>
               <View style={styles.row}>
-                {/* Mostrar "Antes" y "Después" si falta cantidad o está marcado como no disponible */}
-                {(!item.available || item.quantity < (item.originalQuantity || 0)) ? (
-                  <>
-                    <View style={[styles.column, styles.alignLeft]}>
-                      <Text style={styles.columnTitle}>Antes</Text>
-                      <Text style={styles.strikeThrough}>
-                        {item.originalQuantity} unidades
-                      </Text>
-                      <Text style={styles.strikeThrough}>
-                        Subtotal: ${(item.price * item.originalQuantity!).toLocaleString()}
-                      </Text>
-                    </View>
-                    <View style={[styles.column, styles.alignRight]}>
-                      <Text style={styles.columnTitle}>Después</Text>
-                      <Text>
-                        {item.quantity} unidades
-                      </Text>
-                      <Text>
-                        Subtotal: ${(item.price * item.quantity).toLocaleString()}
-                      </Text>
-                    </View>
-                  </>
-                ) : (
-                  <View style={[styles.column, styles.alignRight]}>
-                    <Text>{item.quantity} unidades</Text>
-                    <Text>Subtotal: ${(item.price * item.quantity).toLocaleString()}</Text>
+                {/* Mostrar columna "Antes" solo si el producto está marcado como no disponible */}
+                {!item.available && item.originalQuantity && (
+                  <View style={[styles.column, styles.alignLeft]}>
+                    <Text style={styles.columnTitle}>Antes</Text>
+                    <Text style={styles.strikeThrough}>
+                      {item.originalQuantity} unidades
+                    </Text>
+                    <Text style={styles.strikeThrough}>
+                      Subtotal: ${(item.price * item.originalQuantity).toLocaleString()}
+                    </Text>
                   </View>
                 )}
+                {/* Mostrar siempre la columna "Después" */}
+                <View style={[styles.column, styles.alignRight]}>
+                  <Text style={styles.columnTitle}>{!item.available ? "Después" : ""}</Text>
+                  <Text>
+                    {item.quantity.toString().padStart(2, '0')} unidades
+                  </Text>
+                  <Text>
+                    Subtotal: ${(item.price * item.quantity).toLocaleString()}
+                  </Text>
+                </View>
               </View>
             </View>
             <View style={styles.productIcon}>

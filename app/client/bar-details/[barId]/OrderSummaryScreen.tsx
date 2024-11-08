@@ -3,8 +3,6 @@ import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView } from 'react
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
-// import axios from 'axios'; // Descomentar cuando se vaya a usar con el backend
-// import { API_URL } from '@env'; // Descomentar cuando se vaya a usar con el backend
 
 interface Product {
   id: string;
@@ -17,10 +15,11 @@ interface Product {
 
 const OrderSummaryScreen: React.FC = () => {
   const router = useRouter();
-  const { products: productsParam, table_id } = useLocalSearchParams();
+  const { products: productsParam, table_id, bar_id } = useLocalSearchParams(); 
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [originalTotal, setOriginalTotal] = useState<number | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null); 
 
   useEffect(() => {
     if (typeof productsParam === 'string') {
@@ -68,16 +67,31 @@ const OrderSummaryScreen: React.FC = () => {
       text1: 'Pedido Confirmado',
       text2: 'Procediendo al pago...',
     });
-    router.push(`/client/bar-details/[barId]/PaymentMethodScreen`);
+    
+    router.push({
+      pathname: `/client/bar-details/${bar_id}/PaymentMethodScreen`, 
+      params: {
+        paymentMethod: selectedMethod,
+        total,
+        bar_id,
+        table_id,
+      },
+    });
   };
 
   const handleCancelOrder = () => {
-    Toast.show({
-      type: 'info',
-      text1: 'Pedido Cancelado',
-      text2: 'Has cancelado el pedido.',
-    });
-    router.back();
+    
+    // Redirigir a la vista de productos del bar en lugar de volver
+    if (bar_id) {
+      router.push(`/client/bar-details/${bar_id}/index`);
+    } else {
+      console.error("Error: bar_id no está definido.");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo redirigir a la carta de productos. bar_id no está definido.',
+      });
+    }
   };
 
   return (
@@ -92,7 +106,6 @@ const OrderSummaryScreen: React.FC = () => {
               <Text style={styles.productName}>{item.name}</Text>
               <Text style={styles.productPrice}>C/U ${item.price.toLocaleString()}</Text>
               <View style={styles.row}>
-                {/* Mostrar columna "Antes" solo si el producto está marcado como no disponible */}
                 {!item.available && item.originalQuantity && (
                   <View style={[styles.column, styles.alignLeft]}>
                     <Text style={styles.columnTitle}>Antes</Text>
@@ -104,7 +117,6 @@ const OrderSummaryScreen: React.FC = () => {
                     </Text>
                   </View>
                 )}
-                {/* Mostrar siempre la columna "Después" */}
                 <View style={[styles.column, styles.alignRight]}>
                   <Text style={styles.columnTitle}>{!item.available ? "Después" : ""}</Text>
                   <Text>

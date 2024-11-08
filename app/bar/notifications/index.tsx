@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
+import BarBottomBar from '../../../components/Bar/BottomBar/BarBottomBar'; 
 
 interface Notification {
   id: string;
   tableNumber: string; // Número de mesa
-  product: string; // Producto no disponible
-  quantity: number; // Cantidad del producto
+  items: string; // Productos
+  total: number; // Total del pedido
   action: string; // Acción del cliente (sustituir o eliminar)
 }
 
@@ -18,8 +19,8 @@ const NotificationsScreen: React.FC = () => {
   useEffect(() => {
     // Simulación de notificaciones con más detalles mientras no esté disponible el backend
     setNotifications([
-      { id: '1', tableNumber: '3', product: 'Cerveza Artesanal', quantity: 2, action: 'eliminar' },
-      { id: '2', tableNumber: '5', product: 'Pizza Margherita', quantity: 1, action: 'sustituir' }
+      { id: '1', tableNumber: '3', items: 'Cerveza Artesanal, Mojito', total: 7000, action: 'eliminar' },
+      { id: '2', tableNumber: '5', items: 'Pizza Margherita', total: 8500, action: 'sustituir' }
     ]);
 
     // Aquí irá la integración con el backend
@@ -44,24 +45,27 @@ const NotificationsScreen: React.FC = () => {
       text2: `La notificación ${notificationId} ha sido gestionada.`,
     });
 
-    // Aquí se podría enviar la actualización al backend
-    /*
-    const updateNotificationStatus = async () => {
-      try {
-        await axios.post(`URL_DEL_BACKEND/api/notifications/${notificationId}/mark-as-seen`);
-      } catch (error) {
-        console.error('Error updating notification status:', error);
-      }
-    };
-
-    updateNotificationStatus();
-    */
-
-    // Después de manejar la notificación, se puede redirigir a otra pantalla si es necesario
+    // Redirigir a la vista del pedido específico
     setTimeout(() => {
-      router.push('/bar/orders'); // Redirige a la lista de pedidos o algún otro flujo de gestión
+      router.push(`/bar/orders/${notificationId}`); // Redirige a la vista del pedido usando el ID de la notificación
     }, 1000);
   };
+
+  const renderNotificationItem = ({ item }: { item: Notification }) => (
+    <TouchableOpacity onPress={() => handleNotificationPress(item.id)}>
+      <View style={styles.notificationCard}>
+        <Text style={styles.notificationText}>
+          <Text style={styles.boldText}>Mesa: {item.tableNumber}</Text>
+        </Text>
+        <Text style={styles.notificationText}>
+          Items: {item.items}
+        </Text>
+        <Text style={styles.notificationText}>
+          Total: ${item.total ? item.total.toLocaleString() : '0'}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -69,23 +73,10 @@ const NotificationsScreen: React.FC = () => {
       <FlatList
         data={notifications}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleNotificationPress(item.id)}>
-            <View style={styles.notificationCard}>
-              <Text style={styles.notificationText}>
-                <Text style={styles.boldText}>Mesa: {item.tableNumber}</Text>
-              </Text>
-              <Text style={styles.notificationText}>
-                Producto: {item.product} - Cantidad: {item.quantity}
-              </Text>
-              <Text style={styles.notificationText}>
-                Acción del cliente: {item.action === 'eliminar' ? 'Eliminar' : 'Sustituir'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
+        renderItem={renderNotificationItem}
       />
       <Toast />
+      <BarBottomBar />
     </View>
   );
 };

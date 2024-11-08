@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
@@ -12,45 +12,42 @@ const BarBottomBar: React.FC = () => {
   useEffect(() => {
     // Simula recibir una notificación después de 5 segundos (para pruebas)
     setTimeout(() => {
-      setNotifications(notifications + 1);
+      setNotifications(prev => prev + 1);
     }, 5000);
   }, []);
 
   const getTabColor = (tabRoute: string) => {
-    return pathname.includes(tabRoute) ? '#EF233C' : '#747272';
+    // Cambia el color si la ruta actual incluye la ruta del tab
+    return pathname.startsWith(tabRoute) ? '#EF233C' : '#747272'; 
   };
 
   const getTextStyle = (tabRoute: string) => {
-    return pathname.includes(tabRoute) ? styles.selectedIconText : styles.iconText;
+    // Cambia el estilo del texto según la ruta
+    return pathname.startsWith(tabRoute) ? styles.selectedIconText : styles.iconText;
   };
 
   const handleNavigation = (route: string) => {
-    if (!pathname.includes(route)) {
+    if (!pathname.startsWith(route)) {
       router.push(route);
     }
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => handleNavigation('/bar/orders')}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="list-outline" size={24} color={getTabColor('/bar/orders')} />
-          <Text style={getTextStyle('/bar/orders')}>Pedidos</Text>
-        </View>
-      </TouchableOpacity>
-
       <TouchableOpacity onPress={() => handleNavigation('/bar/notifications')}>
         <View style={styles.iconContainer}>
           <Ionicons name="notifications-outline" size={24} color={getTabColor('/bar/notifications')} />
           {/* Mostrar la cantidad de notificaciones */}
-          <Text style={getTextStyle('/bar/notifications')}>Notificaciones {notifications > 0 ? `(${notifications})` : ''}</Text>
+          <Text style={getTextStyle('/bar/notifications')}>
+            Notificaciones {notifications > 0 ? `(${notifications})` : ''}
+          </Text>
         </View>
       </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => handleNavigation('/bar/account/AccountSettingsScreen')}>
+      
+      <TouchableOpacity onPress={() => handleNavigation('/bar/orders/Orders')}>
         <View style={styles.iconContainer}>
-          <Ionicons name="person-outline" size={24} color={getTabColor('/bar/account')} />
-          <Text style={getTextStyle('/bar/account')}>Mi Cuenta</Text>
+          <Ionicons name="list-outline" size={24} color={getTabColor('/bar/orders/Orders')} />
+          <Text style={getTextStyle('/bar/orders')}>Pedidos</Text>
         </View>
       </TouchableOpacity>
     </View>
@@ -77,6 +74,7 @@ const styles = StyleSheet.create({
     color: '#747272',
   },
   selectedIconText: {
+    fontSize: 12,
     color: '#EF233C',
   },
 });

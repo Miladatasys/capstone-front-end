@@ -7,29 +7,28 @@ import Toast from 'react-native-toast-message';
 import axios from 'axios';
 import { API_URL } from '@env';
 
-
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
-  const { bar_id, table_id } = useLocalSearchParams(); // VERIFICAR SI SE RECIBE correctamente bar_id y table_id
+  const { bar_id, table_id } = useLocalSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
   const [hasNotification, setHasNotification] = useState(false);
+  const userId = 10; // Reemplaza con el ID real del usuario
 
   useEffect(() => {
-    console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id }); 
+    console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id });
 
-    if (!bar_id) {
-      console.error("Error: El bar_id no fue proporcionado.");
+    if (!bar_id || !table_id) {
+      console.error("Error: El bar_id o table_id no fueron proporcionados.");
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'No se pudo obtener el id del bar.',
+        text2: 'No se pudo obtener el id del bar o de la mesa.',
       });
       return;
     }
 
-    // Obtener productos del backend
     const fetchProducts = async () => {
       try {
         console.log("Obteniendo productos del bar con id:", bar_id);
@@ -38,9 +37,8 @@ const BarDetailsScreen: React.FC = () => {
         setProducts(response.data);
 
         const initialQuantities = {};
-        console.log(initialQuantities)
         response.data.forEach((product) => {
-          initialQuantities[product.product_id] = 0; // Usar product_id para las cantidades
+          initialQuantities[product.product_id] = 0;
         });
         setQuantities(initialQuantities);
         console.log("Cantidades inicializadas:", initialQuantities);
@@ -61,17 +59,15 @@ const BarDetailsScreen: React.FC = () => {
     console.log(`Actualizando cantidad para el producto con id ${prodQuantId}. Incremento: ${isIncrement}`);
     setQuantities((prevQuantities) => {
       const currentQuantity = prevQuantities[prodQuantId] || 0;
-      const maxQuantity = products.find(product => product.product_id === prodQuantId)?.category === "Bebida" ? 15 : 8; // Limite según categoría
+      const maxQuantity = products.find(product => product.product_id === prodQuantId)?.category === "Bebida" ? 15 : 8;
       const newQuantity = isIncrement ? Math.min(currentQuantity + 1, maxQuantity) : Math.max(0, currentQuantity - 1);
 
-      // Recalcular el total
       const updatedTotal = products.reduce((acc, product) => {
-        const quantity = product.product_id === prodQuantId ? newQuantity : prevQuantities[product.product_id];
-        return acc + parseFloat(product.price) * quantity; // convertir a número
+        const quantity = product.product_id === prodQuantId ? newQuantity : prevQuantities[product.product_id] || 0;
+        return acc + (parseFloat(product.price || '0') * quantity);
       }, 0);
 
       console.log("Nuevo total calculado:", updatedTotal);
-
       setTotal(updatedTotal);
 
       return {
@@ -86,25 +82,34 @@ const BarDetailsScreen: React.FC = () => {
     const selectedProducts = products
       .filter((product) => quantities[product.product_id] > 0)
       .map((product) => ({
-        id: product.product_id,
+        product_id: product.product_id,
         name: product.name,
-        price: parseFloat(product.price),
+        price: parseFloat(product.price) || 0,
         quantity: quantities[product.product_id],
-        originalQuantity: quantities[product.product_id], // Almacena la cantidad original solicitada
+        originalQuantity: quantities[product.product_id],
         available: product.availability,
-      }));
-  
+      }))
+      .filter(product => product.product_id && product.quantity > 0 && product.price > 0);
+
     console.log("Productos seleccionados:", selectedProducts);
-  
+
     if (selectedProducts.length > 0) {
       const productsString = JSON.stringify(selectedProducts);
-  
+
       const sendOrder = async () => {
         try {
           console.log("Enviando pedido para la mesa con id:", table_id);
+          console.log("Enviando pedido con datos:", {
+            products: selectedProducts,
+            table_id: table_id,
+            bar_id: bar_id,
+            user_id: userId,
+          });
           const response = await axios.post(`${API_URL}/api/orders`, {
             products: selectedProducts,
             table_id: table_id,
+            bar_id: bar_id,
+            user_id: userId
           });
           console.log("Respuesta del servidor al enviar pedido:", response.data);
           Toast.show({
@@ -121,13 +126,14 @@ const BarDetailsScreen: React.FC = () => {
           });
         }
       };
-  
+
       sendOrder();
-  
-      // Redirigir a la pantalla de confirmación
+
+      
+      console.log("bar_id:", bar_id, "table_id:", table_id);
       router.push({
-        pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
-        params: { products: productsString, table_id },
+        pathname: `/client/scan/InviteClientsScreen`,
+        params: { products: productsString, table_id, bar_id },
       });
     } else {
       console.log("No hay productos seleccionados.");
@@ -153,7 +159,7 @@ const BarDetailsScreen: React.FC = () => {
             <Image source={{ uri: item.image_url }} style={styles.productImage} />
             <View style={styles.productInfo}>
               <Text style={styles.productName}>{item.name}</Text>
-              <Text style={styles.productPrice}>C/U ${parseFloat(item.price).toLocaleString()}</Text>
+              <Text style={styles.productPrice}>C/U ${parseFloat(item.price || '0').toLocaleString()}</Text>
               <View style={styles.quantityContainer}>
                 <TouchableOpacity
                   style={styles.quantityButton}
@@ -164,7 +170,6 @@ const BarDetailsScreen: React.FC = () => {
                 <Text style={styles.quantity}>
                   {(quantities[item.product_id] !== undefined ? quantities[item.product_id] : 0).toLocaleString('en-US', { minimumIntegerDigits: 2 })}
                 </Text>
-
                 <TouchableOpacity
                   style={styles.quantityButton}
                   onPress={() => updateQuantity(item.product_id, true)}
@@ -175,20 +180,20 @@ const BarDetailsScreen: React.FC = () => {
               <View style={styles.subtotalContainer}>
                 <Text style={styles.subtotalLabel}>Subtotal</Text>
                 <Text style={styles.subtotalAmount}>
-                  ${(quantities[item.product_id] * parseFloat(item.price)).toLocaleString()}
+                  ${(quantities[item.product_id] * parseFloat(item.price || '0')).toLocaleString()}
                 </Text>
               </View>
             </View>
           </View>
         )}
-        keyExtractor={(item) => item.product_id.toString()} // Usa product_id como clave
+        keyExtractor={(item) => item.product_id.toString()}
         contentContainerStyle={styles.list}
       />
 
       <View style={styles.totalBar}>
         <Text style={styles.totalText}>Total: ${total.toLocaleString()}</Text>
         <TouchableOpacity style={styles.payButton} onPress={handleRequestOrder}>
-          <Text style={styles.payButtonText}>Pedir</Text> 
+          <Text style={styles.payButtonText}>Pedir</Text>
         </TouchableOpacity>
       </View>
 
@@ -197,8 +202,6 @@ const BarDetailsScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {

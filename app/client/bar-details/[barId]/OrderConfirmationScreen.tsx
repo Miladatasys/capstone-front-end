@@ -9,6 +9,9 @@ const OrderConfirmationScreen: React.FC = () => {
 
   // Lógica para volver a la pantalla principal y confirmar el pedido
   const handleGoHome = () => {
+    router.push(`/client/bar-details/${barId}`);
+  };
+  
     // Aquí comentarías la integración con axios hasta que el backend esté listo
     /*
     axios.post('https://tu-backend.com/api/orders/confirm', {
@@ -35,8 +38,8 @@ const OrderConfirmationScreen: React.FC = () => {
     */
     
     // Por ahora, simplemente navegas de regreso a la pantalla de inicio
-    router.push(`/client/bar-details/index`);
-  };
+    //router.push(`/client/bar-details/index`);
+  //};
 
   return (
     <SafeAreaView style={styles.container}>

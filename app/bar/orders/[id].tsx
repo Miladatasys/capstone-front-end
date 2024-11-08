@@ -36,42 +36,26 @@ const BarOrderDetails: React.FC = () => {
       customer: 'Nombre',
     };
 
-    // Aquí es donde realizarías la llamada al backend para obtener los detalles del pedido:
-    /*
-    const fetchOrder = async () => {
-      try {
-        const response = await axios.get(`https://tu-backend.com/api/orders/${id}`);
-        setOrder(response.data);
-        setAdjustedItems(response.data.items);
-        setAdjustedTotal(response.data.total);
-      } catch (error) {
-        console.error('Error al obtener los detalles del pedido:', error);
-      }
-    };
-
-    fetchOrder(); 
-    */
-
     setOrder(simulatedOrder);
     setAdjustedItems(simulatedOrder.items);
     setAdjustedTotal(simulatedOrder.total);
   }, [id]);
 
   const handleChangeQuantity = (itemName: string, change: number) => {
-    setAdjustedItems((prevItems) =>
-      prevItems.map((item) =>
-        item.name === itemName
-          ? {
-              ...item,
-              quantity: Math.max(0, item.quantity + change), // No permitir cantidad negativa
-            }
-          : item
-      )
-    );
-    const item = adjustedItems.find((item) => item.name === itemName);
-    if (item && item.quantity + change >= 0) { // Asegurar que el total no siga reduciéndose si la cantidad es 0
-      setAdjustedTotal((prevTotal) => Math.max(0, prevTotal + item.price * change));
-    }
+    setAdjustedItems((prevItems) => {
+      return prevItems.map((item) => {
+        if (item.name === itemName) {
+          const newQuantity = Math.max(0, item.quantity + change);
+          // Ajustar el total basado en la nueva cantidad
+          setAdjustedTotal((prevTotal) => {
+            const priceDifference = (newQuantity - item.quantity) * item.price;
+            return Math.max(0, prevTotal + priceDifference);
+          });
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+    });
   };
 
   const handleMarkAsUnavailable = (itemName: string) => {
@@ -85,6 +69,12 @@ const BarOrderDetails: React.FC = () => {
           : item
       )
     );
+
+    // Actualizar el total ajustado al marcar como agotado
+    const item = adjustedItems.find((item) => item.name === itemName);
+    if (item) {
+      setAdjustedTotal((prevTotal) => Math.max(0, prevTotal - item.price * item.quantity));
+    }
   };
 
   const handleConfirmOrder = () => {
@@ -92,25 +82,9 @@ const BarOrderDetails: React.FC = () => {
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Aceptar',
-        onPress: async () => {
-          // Simulación de confirmación de pedido
+        onPress: () => {
           Alert.alert('Éxito', 'El pedido ha sido confirmado con los productos disponibles.');
-          
-          // Redirigir a la pantalla de lista de pedidos
           router.push('/bar/orders/Orders');
-          
-          // Aquí es donde deberíamos integrar el backend para actualizar el estado del pedido:
-          /*
-          try {
-            await axios.put(`https://tu-backend.com/api/orders/${id}/confirm`, {
-              adjustedItems,
-              adjustedTotal,
-            });
-            // Actualizar el estado del pedido si es necesario
-          } catch (error) {
-            console.error('Error al confirmar el pedido:', error);
-          }
-          */
         },
       },
     ]);
@@ -118,22 +92,7 @@ const BarOrderDetails: React.FC = () => {
 
   const handleProposeChange = () => {
     Alert.alert('Cambio propuesto', 'Propuesta de cambio enviada al cliente.');
-
-    // Redirigir a la pantalla de lista de pedidos
     router.push('/bar/orders/Orders');
-    
-    // Aquí es donde debería enviar la propuesta de cambio al backend:
-    /*
-    try {
-      await axios.post(`https://tu-backend.com/api/orders/${id}/propose-change`, {
-        adjustedItems,
-        adjustedTotal,
-      });
-      // Manejar la respuesta del backend si es necesario
-    } catch (error) {
-      console.error('Error al proponer el cambio:', error);
-    }
-    */
   };
 
   const handleRejectOrder = () => {
@@ -141,24 +100,9 @@ const BarOrderDetails: React.FC = () => {
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Aceptar',
-        onPress: async () => {
+        onPress: () => {
           Alert.alert('Pedido Rechazado', 'El pedido ha sido rechazado.');
-
-          // Redirigir a la pantalla de lista de pedidos
           router.push('/bar/orders/Orders');
-          
-          // Aquí es donde deberíamos integrar el backend para actualizar el estado del pedido como rechazado:
-          /*
-          try {
-            await axios.put(`https://tu-backend.com/api/orders/${id}/reject`, {
-              adjustedItems,
-              adjustedTotal,
-            });
-            // Actualizar el estado del pedido si es necesario
-          } catch (error) {
-            console.error('Error al rechazar el pedido:', error);
-          }
-          */
         },
       },
     ]);

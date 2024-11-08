@@ -10,7 +10,7 @@ const BarSignInScreen: React.FC = () => {
 
   const onBarSignInPressed = () => {
     console.log('Inicio de sesión de bar con', email, password);
-    router.push("/bar/orders/Orders"); 
+    router.push("/bar/notifications"); 
   };
 
   const onBarSignUpPressed = () => {

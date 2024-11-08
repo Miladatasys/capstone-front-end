@@ -3,7 +3,6 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions } from '
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import BarBottomBar from '../../../components/Bar/BottomBar/BarBottomBar';
 import { useRouter } from 'expo-router';
-// import axios from 'axios'; // Descomentar esto cuando el backend esté listo
 
 interface Order {
   id: string;
@@ -22,7 +21,7 @@ const Orders: React.FC = () => {
     { id: '1', table: 'Mesa 1', items: 'Cerveza, Pisco Sour', total: 12000, status: 'Propuesta pendiente' },
     { id: '2', table: 'Mesa 2', items: 'Vodka, Papas Fritas', total: 8000, status: 'Aceptado' },
     { id: '3', table: 'Mesa 3', items: 'Pizza', total: 15000, status: 'Cancelado por cliente' },
-    { id: '4', table: 'Mesa 4', items: 'Cerveza', total: 4000, status: 'Rechazado por bar' }, // Nueva categoría
+    { id: '4', table: 'Mesa 4', items: 'Cerveza', total: 4000, status: 'Rechazado por bar' },
   ];
 
   useEffect(() => {
@@ -43,7 +42,7 @@ const Orders: React.FC = () => {
   }, []);
 
   const renderOrderItem = ({ item }: { item: Order }) => (
-    <TouchableOpacity onPress={() => router.push(`/bar/orders/${item.id}`)}>
+    <TouchableOpacity onPress={() => router.push(`/bar/orders/OrderDetail?id=${item.id}`)}>
       <View style={styles.orderItem}>
         <Text style={styles.tableText}>Mesa: {item.table}</Text>
         <Text style={styles.itemsText}>Items: {item.items}</Text>
@@ -63,20 +62,18 @@ const Orders: React.FC = () => {
         return '#4CAF50'; // Verde para aceptado
       case 'Cancelado por cliente':
         return '#EF233C'; // Rojo para cancelado por cliente
-      case 'Rechazado por bar': // Nueva categoría con color personalizado
+      case 'Rechazado por bar':
         return '#FF6347'; // Tomate para rechazos
       default:
         return '#000';
     }
   };
 
-  // Filtrar pedidos según el estado
   const filterOrdersByStatus = (status: string) => {
     if (status === 'Todos') return orders;
     return orders.filter(order => order.status === status);
   };
 
-  // Crear las escenas para cada pestaña
   const renderPendingOrders = () => (
     <FlatList
       data={filterOrdersByStatus('Pendiente')}
@@ -111,7 +108,7 @@ const Orders: React.FC = () => {
 
   const renderRejectedOrders = () => (
     <FlatList
-      data={filterOrdersByStatus('Rechazado por bar')} // Filtrar por el nuevo estado
+      data={filterOrdersByStatus('Rechazado por bar')}
       renderItem={renderOrderItem}
       keyExtractor={item => item.id}
     />
@@ -125,7 +122,6 @@ const Orders: React.FC = () => {
     />
   );
 
-  // Configuración del TabView
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'all', title: 'Todos' },
@@ -133,7 +129,7 @@ const Orders: React.FC = () => {
     { key: 'inProgress', title: 'Propuesta pendiente' },
     { key: 'completed', title: 'Aceptado' },
     { key: 'cancelled', title: 'Cancelado por cliente' },
-    { key: 'rejected', title: 'Rechazado por bar' }, // Nueva pestaña
+    { key: 'rejected', title: 'Rechazado por bar' },
   ]);
 
   const renderScene = SceneMap({
@@ -141,7 +137,7 @@ const Orders: React.FC = () => {
     inProgress: renderInProgressOrders,
     completed: renderCompletedOrders,
     cancelled: renderCancelledOrders,
-    rejected: renderRejectedOrders, // Escena de pedidos rechazados
+    rejected: renderRejectedOrders,
     all: renderAllOrders,
   });
 
@@ -149,7 +145,6 @@ const Orders: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Pedidos Activos</Text>
 
-      {/* Componente de pestañas */}
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
@@ -158,7 +153,7 @@ const Orders: React.FC = () => {
         renderTabBar={props => (
           <TabBar
             {...props}
-            scrollEnabled={true} // Permite desplazamiento entre pestañas
+            scrollEnabled={true}
             indicatorStyle={{ backgroundColor: '#EF233C' }}
             style={styles.tabBar}
             labelStyle={styles.tabLabel}
@@ -220,7 +215,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontWeight: '600',
-    fontSize: 14, // Ajustar el tamaño de la fuente para mejorar la legibilidad
+    fontSize: 14,
     color: '#EF233C',
   },
 });

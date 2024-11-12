@@ -9,7 +9,7 @@ import { API_URL } from '@env';
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
-  const { bar_id, table_id } = useLocalSearchParams();
+  const { bar_id, table_id,user_id } = useLocalSearchParams(); // VERIFICAR SI SE RECIBE correctamente bar_id y table_id
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
@@ -32,8 +32,10 @@ const BarDetailsScreen: React.FC = () => {
     const fetchProducts = async () => {
       try {
         console.log("Obteniendo productos del bar con id:", bar_id);
+        console.log('URL a utilizar c: ', API_URL)
         const response = await axios.get(`${API_URL}/api/bars/${bar_id}/products`);
         console.log("Productos recibidos:", response.data);
+        console.log('datos del response: ',response)
         setProducts(response.data);
 
         const initialQuantities = {};

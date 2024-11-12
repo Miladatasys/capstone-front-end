@@ -29,14 +29,20 @@ const ClientSignInScreen: React.FC = () => {
   
     try {
       // Realiza la solicitud al backend para autenticar al usuario
+      console.log('Api url: ',API_URL)  
       const response = await axios.post(`${API_URL}/api/login`, {
         email: username,
         password,
       });
       console.log(response.data); // Log para verificar la respuesta
-  
+      console.log(response)
       // Si el inicio de sesión es exitoso
       if (response.status === 200) {
+        const user_id = response.data.user_id; // Asegúrate de que el backend devuelva user_id
+        const userType = response.data.user_type_id; // También puedes extraer el tipo de usuario si es necesario
+        
+        console.log('Inicio de sesión exitoso:', { user_id, userType });
+  
         Toast.show({
           type: 'success',
           text1: 'Inicio de Sesión Exitoso',
@@ -45,6 +51,7 @@ const ClientSignInScreen: React.FC = () => {
   
         // Almacenar el token JWT si es necesario
         const token = response.data.token;
+        console.log('token: ', token)
         // Puedes almacenar el token usando AsyncStorage o algún método similar
   
         // Navegar a la pantalla de Recomendaciones
@@ -53,6 +60,7 @@ const ClientSignInScreen: React.FC = () => {
     } catch (error) {
       // Mostrar un Toast en caso de error con el inicio de sesión
       console.error('Error al realizar la solicitud:', error); // Log para ver el error completo
+      console.log(error)
       Toast.show({
         type: 'error',
         text1: 'Error de Inicio de Sesión',

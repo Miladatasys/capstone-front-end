@@ -9,7 +9,7 @@ import { API_URL } from '@env';
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
-  const { bar_id, table_id,user_id } = useLocalSearchParams(); // VERIFICAR SI SE RECIBE correctamente bar_id y table_id
+  const { bar_id, table_id, user_id } = useLocalSearchParams(); // VERIFICAR SI SE RECIBE correctamente bar_id y table_id
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
@@ -17,7 +17,7 @@ const BarDetailsScreen: React.FC = () => {
   const userId = 10; // Reemplaza con el ID real del usuario
 
   useEffect(() => {
-    console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id });
+    //console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id });
 
     if (!bar_id || !table_id) {
       console.error("Error: El bar_id o table_id no fueron proporcionados.");
@@ -32,9 +32,9 @@ const BarDetailsScreen: React.FC = () => {
     const fetchProducts = async () => {
       try {
         console.log("Obteniendo productos del bar con id:", bar_id);
-        console.log('URL a utilizar c: ', API_URL)
+        //console.log('URL a utilizar c: ', API_URL)
         const response = await axios.get(`${API_URL}/api/bars/${bar_id}/products`);
-        console.log("Productos recibidos:", response.data);
+        //console.log("Productos recibidos:", response.data);
         console.log('datos del response: ',response)
         setProducts(response.data);
 
@@ -58,7 +58,7 @@ const BarDetailsScreen: React.FC = () => {
   }, [bar_id, table_id]);
 
   const updateQuantity = (prodQuantId: string, isIncrement: boolean) => {
-    console.log(`Actualizando cantidad para el producto con id ${prodQuantId}. Incremento: ${isIncrement}`);
+    //console.log(`Actualizando cantidad para el producto con id ${prodQuantId}. Incremento: ${isIncrement}`);
     setQuantities((prevQuantities) => {
       const currentQuantity = prevQuantities[prodQuantId] || 0;
       const maxQuantity = products.find(product => product.product_id === prodQuantId)?.category === "Bebida" ? 15 : 8;
@@ -68,9 +68,9 @@ const BarDetailsScreen: React.FC = () => {
         const quantity = product.product_id === prodQuantId ? newQuantity : prevQuantities[product.product_id] || 0;
         return acc + (parseFloat(product.price || '0') * quantity);
       }, 0);
-
-      console.log("Nuevo total calculado:", updatedTotal);
+      
       setTotal(updatedTotal);
+      console.log("Nuevo total calculado:", updatedTotal);
 
       return {
         ...prevQuantities,
@@ -93,7 +93,7 @@ const BarDetailsScreen: React.FC = () => {
       }))
       .filter(product => product.product_id && product.quantity > 0 && product.price > 0);
 
-    console.log("Productos seleccionados:", selectedProducts);
+    //console.log("Productos seleccionados:", selectedProducts);
 
     if (selectedProducts.length > 0) {
       const productsString = JSON.stringify(selectedProducts);
@@ -101,12 +101,13 @@ const BarDetailsScreen: React.FC = () => {
       const sendOrder = async () => {
         try {
           console.log("Enviando pedido para la mesa con id:", table_id);
-          console.log("Enviando pedido con datos:", {
-            products: selectedProducts,
-            table_id: table_id,
-            bar_id: bar_id,
-            user_id: userId,
-          });
+          // console.log("Enviando pedido con datos:", {
+          //   products: selectedProducts,
+          //   table_id: table_id,
+          //   bar_id: bar_id,
+          //   user_id: userId,
+          // }
+        // );
           const response = await axios.post(`${API_URL}/api/orders`, {
             products: selectedProducts,
             table_id: table_id,

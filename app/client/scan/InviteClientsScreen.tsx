@@ -7,8 +7,10 @@ import QRCode from 'react-native-qrcode-svg';
 export default function InviteClientsScreen() {
   const [showQRCode, setShowQRCode] = useState(false);
   const router = useRouter();
-  const { bar_id } = useLocalSearchParams(); // Recibe el `bar_id` como parámetro
+  const { bar_id, table_id, user_id } = useLocalSearchParams(); // Recibe el `bar_id` como parámetro
 
+
+  //Generar QR con datos de direccionamiento
   const handleInvite = () => {
     // Muestra el código QR para que otros clientes puedan escanearlo
     setShowQRCode(true);

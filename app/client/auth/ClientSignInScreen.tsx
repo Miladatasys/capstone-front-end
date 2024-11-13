@@ -39,23 +39,24 @@ const ClientSignInScreen: React.FC = () => {
       // Si el inicio de sesión es exitoso
       if (response.status === 200) {
         const user_id = response.data.user_id; // Asegúrate de que el backend devuelva user_id
-        const userType = response.data.user_type_id; // También puedes extraer el tipo de usuario si es necesario
+        const user_type_id = response.data.user_type_id; // También puedes extraer el tipo de usuario si es necesario
         
-        console.log('Inicio de sesión exitoso:', { user_id, userType });
-  
+        console.log('Inicio de sesión exitoso:', { user_id, user_type_id });
+
         Toast.show({
           type: 'success',
           text1: 'Inicio de Sesión Exitoso',
           text2: 'Bienvenido de nuevo!',
         });
-  
+
         // Almacenar el token JWT si es necesario
         const token = response.data.token;
         //console.log('token: ', token)
         // Puedes almacenar el token usando AsyncStorage o algún método similar
   
         // Navegar a la pantalla de Recomendaciones
-        router.push("/client/recommendations/RecommendationsScreen");
+        // router.push("/client/recommendations/RecommendationsScreen");
+        router.push(`/client/recommendations/RecommendationsScreen?user_id=${user_id}&user_type_id=${user_type_id}`);
       }
     } catch (error) {
       // Mostrar un Toast en caso de error con el inicio de sesión

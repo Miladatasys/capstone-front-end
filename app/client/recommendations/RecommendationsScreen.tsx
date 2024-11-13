@@ -4,7 +4,7 @@ import { View, StyleSheet, FlatList, SafeAreaView, Text } from 'react-native';
 import SearchBar from '../../../components/CustomInput/SearchBar';
 import BarCard from '../../../components/Bar/BarCard';
 import BottomNavBar from '../../../components/Navigation/BottomNavBar';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import axios from 'axios'; 
 import { API_URL } from '@env';
 
@@ -13,8 +13,15 @@ const RecommendationsScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [barData, setBarData] = useState<any[]>([]);
   const router = useRouter();
+  const {user_id, user_type_id} = useLocalSearchParams();
 
   useEffect(() => {
+    
+    console.log('user_id:', user_id, 'user_type_id:', user_type_id); // Verificar que los parámetros son correctos
+  }, [user_id, user_type_id]);
+
+  useEffect(() => {    
+    
     const fetchBarData = async () => {
       try {
           // Realiza la solicitud al backend para obtener la lista de bares
@@ -30,9 +37,10 @@ const RecommendationsScreen: React.FC = () => {
   }, []);
 
   const onSelectBar = (bar_id: string) => {
-    router.push(`/client/scan?barId=${bar_id}`);
+    router.push(`/client/scan?bar_id=${bar_id}&user_id=${user_id}&user_type_id=${user_type_id}`);
     console.log("Navegando a escanear código QR para bar:", bar_id);
   };
+  
 
   return (
     <SafeAreaView style={styles.container}>

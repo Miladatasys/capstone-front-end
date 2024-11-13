@@ -9,7 +9,7 @@ export default function InviteClientsScreen() {
   const router = useRouter();
   const { bar_id, table_id, user_id } = useLocalSearchParams(); // Recibe el `bar_id` como parámetro
 
-
+  console.log('En la vista de InviteClientsScreen.tsx: bar_id: ',bar_id,'user_id: ',user_id,'table_id: ',table_id)
   //Generar QR con datos de direccionamiento
   const handleInvite = () => {
     // Muestra el código QR para que otros clientes puedan escanearlo

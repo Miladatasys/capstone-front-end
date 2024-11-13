@@ -57,7 +57,9 @@ export default function ClientScanScreen() {
       setTimeout(() => {
         console.log('Redirigiendo a la vista del bar con:', { bar_id, table_id });
         // Asegúrate de pasar table_id como query parameter
-        router.push(`/client/bar-details/${bar_id}?bar_id=${bar_id}&table_id=${table_id}`);
+        //router.push(`/client/bar-details/${bar_id}?bar_id=${bar_id}&table_id=${table_id}`);
+        router.push(`/client/scan/InviteClientsScreen?bar_id=${bar_id}&table_id=${table_id}`);
+
       }, 2000);
 
     } catch (error) {

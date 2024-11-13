@@ -17,8 +17,6 @@ const BarDetailsScreen: React.FC = () => {
   const userId = 10; // Reemplaza con el ID real del usuario
 
   useEffect(() => {
-    //console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id });
-
     if (!bar_id || !table_id) {
       console.error("Error: El bar_id o table_id no fueron proporcionados.");
       Toast.show({
@@ -31,11 +29,7 @@ const BarDetailsScreen: React.FC = () => {
 
     const fetchProducts = async () => {
       try {
-        console.log("Obteniendo productos del bar con id:", bar_id);
-        //console.log('URL a utilizar c: ', API_URL)
         const response = await axios.get(`${API_URL}/api/bars/${bar_id}/products`);
-        //console.log("Productos recibidos:", response.data);
-        console.log('datos del response: ',response)
         setProducts(response.data);
 
         const initialQuantities = {};
@@ -43,7 +37,6 @@ const BarDetailsScreen: React.FC = () => {
           initialQuantities[product.product_id] = 0;
         });
         setQuantities(initialQuantities);
-        console.log("Cantidades inicializadas:", initialQuantities);
       } catch (error) {
         console.error("Error al obtener productos:", error);
         Toast.show({
@@ -58,7 +51,6 @@ const BarDetailsScreen: React.FC = () => {
   }, [bar_id, table_id]);
 
   const updateQuantity = (prodQuantId: string, isIncrement: boolean) => {
-    //console.log(`Actualizando cantidad para el producto con id ${prodQuantId}. Incremento: ${isIncrement}`);
     setQuantities((prevQuantities) => {
       const currentQuantity = prevQuantities[prodQuantId] || 0;
       const maxQuantity = products.find(product => product.product_id === prodQuantId)?.category === "Bebida" ? 15 : 8;
@@ -70,8 +62,6 @@ const BarDetailsScreen: React.FC = () => {
       }, 0);
       
       setTotal(updatedTotal);
-      console.log("Nuevo total calculado:", updatedTotal);
-
       return {
         ...prevQuantities,
         [prodQuantId]: newQuantity,
@@ -80,7 +70,6 @@ const BarDetailsScreen: React.FC = () => {
   };
 
   const handleRequestOrder = () => {
-    console.log("Preparando pedido...");
     const selectedProducts = products
       .filter((product) => quantities[product.product_id] > 0)
       .map((product) => ({
@@ -93,28 +82,17 @@ const BarDetailsScreen: React.FC = () => {
       }))
       .filter(product => product.product_id && product.quantity > 0 && product.price > 0);
 
-    //console.log("Productos seleccionados:", selectedProducts);
-
     if (selectedProducts.length > 0) {
       const productsString = JSON.stringify(selectedProducts);
 
       const sendOrder = async () => {
         try {
-          console.log("Enviando pedido para la mesa con id:", table_id);
-          // console.log("Enviando pedido con datos:", {
-          //   products: selectedProducts,
-          //   table_id: table_id,
-          //   bar_id: bar_id,
-          //   user_id: userId,
-          // }
-        // );
           const response = await axios.post(`${API_URL}/api/orders`, {
             products: selectedProducts,
             table_id: table_id,
             bar_id: bar_id,
             user_id: userId
           });
-          console.log("Respuesta del servidor al enviar pedido:", response.data);
           Toast.show({
             type: 'success',
             text1: 'Pedido enviado',
@@ -132,14 +110,12 @@ const BarDetailsScreen: React.FC = () => {
 
       sendOrder();
 
-      
-      console.log("bar_id:", bar_id, "table_id:", table_id);
+      // Redirigir a la pantalla OrderSummary
       router.push({
-        pathname: `/client/scan/InviteClientsScreen`,
+        pathname: '/client/scan/OrderSummary', // Verificar Ruta
         params: { products: productsString, table_id, bar_id },
       });
     } else {
-      console.log("No hay productos seleccionados.");
       Toast.show({
         type: 'info',
         text1: 'No hay productos seleccionados',

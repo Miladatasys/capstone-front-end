@@ -18,7 +18,8 @@ export default function InviteClientsScreen() {
 
   const handleContinueAlone = () => {
     // Redirige directamente al resumen del pedido sin invitar a otros
-    router.push(`/client/bar-details/${bar_id}/OrderSummaryScreen`);
+    //router.push(`/client/bar-details/${bar_id}/OrderSummaryScreen`);
+    router.push(`/client/bar-details/${bar_id}`);
   };
 
   const handleGoToMenu = () => {

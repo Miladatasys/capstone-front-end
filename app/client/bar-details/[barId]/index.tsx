@@ -134,7 +134,7 @@ const BarDetailsScreen: React.FC = () => {
       
       console.log("bar_id:", bar_id, "table_id:", table_id);
       router.push({
-        pathname: `/client/scan/InviteClientsScreen`,
+        pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
         params: { products: productsString, table_id, bar_id },
       });
     } else {

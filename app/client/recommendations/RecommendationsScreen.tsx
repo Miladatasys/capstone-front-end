@@ -36,8 +36,9 @@ const RecommendationsScreen: React.FC = () => {
     fetchBarData();
   }, []);
 
-  const onSelectBar = (bar_id: string) => {
+  const onSelectBar = (bar_id: string) => {   
     router.push(`/client/scan?bar_id=${bar_id}&user_id=${user_id}&user_type_id=${user_type_id}`);
+ 
     console.log("Navegando a escanear código QR para bar:", bar_id);
   };
   

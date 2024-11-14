@@ -45,9 +45,8 @@ export default function ClientScanScreen() {
       // Asegúrate de que los datos escaneados del QR son un JSON válido
       const parsedData = JSON.parse(data);
       const { bar_id, table_id } = parsedData;
-      // const { user_id } = useLocalSearchParams();
-      console.log('user_id recibido:', user_id); // Verifica que `user_id` esté disponible
-        if (!bar_id || !table_id) {
+      
+      if (!bar_id || !table_id) {
         throw new Error('Código QR inválido, falta bar_id o table_id');
       }
       console.log('Datos procesados:', { user_id, bar_id, table_id });
@@ -57,15 +56,15 @@ export default function ClientScanScreen() {
         table_id,
         user_id, // Agregar el user_id desde useLocalSearchParams()
       };
-      
       console.log('combinedData', combinedData)
+
       // Pasamos los parámetros a la siguiente vista
       setScannedData({ bar_id, table_id });
 
       console.log('Datos procesados bar_id:', bar_id, 'table_id:', table_id, 'user_id: ', user_id);
 
       setTimeout(() => {
-        console.log('Redirigiendo a la vista de invitación con:', { user_id, bar_id, table_id });
+        console.log('Redirigiendo a la vista como invitado con:', { user_id, bar_id, table_id });
         router.push(`/client/scan/InviteClientsScreen?bar_id=${combinedData.bar_id}&table_id=${combinedData.table_id}&user_id=${combinedData.user_id}`);
       }, 2000);
 

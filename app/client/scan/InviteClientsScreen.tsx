@@ -19,12 +19,18 @@ export default function InviteClientsScreen() {
   const handleContinueAlone = () => {
     // Redirige directamente al resumen del pedido sin invitar a otros
     //router.push(`/client/bar-details/${bar_id}/OrderSummaryScreen`);
-    router.push(`/client/bar-details/${bar_id}`);
+    console.log('Pasando de vista InviteClients, continuando solo a bar','bar_id',bar_id,'user_id: ',user_id,'table_id: ',table_id)
+    //router.push(`/client/bar-details/${bar_id}?&user_id=${user_id}&table_id=${table_id}`);
+    router.push(`/client/bar-details/${bar_id}?&user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}`);
+    
   };
 
   const handleGoToMenu = () => {
     // Redirige a la pantalla de productos (Carta) después de mostrar el QR
-    router.push(`/client/bar-details/${bar_id}`);
+    console.log('Pasando de vista bar, luego de crear un QR de invitación:','bar_id',bar_id,'user_id: ',user_id,'table_id: ',table_id)
+    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}`);
+
+    // router.push(`/client/bar-details/${bar_id}&${user_id}&${table_id}`);
   };
 
   return (
@@ -36,13 +42,13 @@ export default function InviteClientsScreen() {
             <CustomButton title="Invitar" onPress={handleInvite} style={styles.inviteButton} />
             <CustomButton title="Continuar solo" onPress={handleContinueAlone} style={styles.continueButton} />
           </View>
-        </>
+        </> 
       ) : (
         <View style={styles.qrContainer}>
           <Text style={styles.qrText}>Escanea este código QR para unirte al pedido:</Text>
           <View style={styles.qrCodeWrapper}>
             <QRCode
-              value={`https://ejemplo.com/join-order?bar_id=${bar_id}`} // Aquí se genera dinámicamente el enlace para unirse al pedido
+              value={`{"bar_id": "${bar_id}", "table_id": "${table_id}", "user_id": "${user_id}"}`}
               size={200}
             />
           </View>

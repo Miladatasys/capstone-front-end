@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 
-
 const BarSignInScreen: React.FC = () => {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -20,6 +19,14 @@ const BarSignInScreen: React.FC = () => {
   const onBarForgotPasswordPressed = () => { 
     router.push("/bar/auth/BarForgotPasswordScreen");
   };
+
+// Modificación en BarSignInScreen.tsx
+
+const onWaiterAccessPressed = () => {
+  // Acceso directo para el mesero sin login
+  router.push("/waiter/WaiterHomeScreen");
+};
+
 
   return (
     <View style={styles.container}>
@@ -54,6 +61,11 @@ const BarSignInScreen: React.FC = () => {
       <TouchableOpacity onPress={onBarForgotPasswordPressed}>
         <Text style={styles.linkText}>¿Olvidaste tu contraseña?</Text>
       </TouchableOpacity>
+
+      {/* Opción minimalista para el mesero */}
+      <TouchableOpacity onPress={onWaiterAccessPressed} style={styles.waiterButton}>
+        <Text style={styles.waiterButtonText}>Acceder como mesero</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -67,9 +79,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   logo: {
-    width: 150,  // Ajusta el tamaño según sea necesario
-    height: 150, // Ajusta el tamaño según sea necesario
-    marginBottom: 30, // Espacio entre el logo y el título
+    width: 150, 
+    height: 150, 
+    marginBottom: 30, 
   },
   title: {
     fontSize: 28,
@@ -102,6 +114,18 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#0077b6',
     marginTop: 10,
+    fontSize: 16,
+  },
+  waiterButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#0096c7',
+    borderRadius: 10,
+    width: '60%',
+  },
+  waiterButtonText: {
+    color: '#fff',
+    textAlign: 'center',
     fontSize: 16,
   },
 });

@@ -19,7 +19,7 @@ interface OrderDetailScreenProps {
 }
 
 const OrderDetailScreen: React.FC = () => {
-  const { orderId, barId } = useLocalSearchParams(); // Obtén el id del pedido desde los parámetros de ruta
+  const { orderId, bar_id } = useLocalSearchParams(); // Obtén el id del pedido desde los parámetros de ruta
   const router = useRouter();
   const [order, setOrder] = useState<OrderDetailScreenProps | null>(null);
 

@@ -17,7 +17,7 @@ const RecommendationsScreen: React.FC = () => {
 
   useEffect(() => {
     
-    console.log('user_id:', user_id, 'user_type_id:', user_type_id); // Verificar que los parámetros son correctos
+    // console.log('user_id:', user_id, 'user_type_id:', user_type_id); // Verificar que los parámetros son correctos
   }, [user_id, user_type_id]);
 
   useEffect(() => {    
@@ -26,7 +26,7 @@ const RecommendationsScreen: React.FC = () => {
       try {
           // Realiza la solicitud al backend para obtener la lista de bares
           const response = await axios.get(`${API_URL}/api/bars`);
-          console.log("Datos de bares recibidos:", response.data);
+          // console.log("Datos de bares recibidos:", response.data);
         setBarData(response.data);
       } catch (error) {
         console.error('Error al obtener los bares:', error);

@@ -1,32 +1,69 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import CustomButton from '../../../components/CustomButton/InviteCustomButton';
 import QRCode from 'react-native-qrcode-svg';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { API_URL } from '@env';
 
 export default function InviteClientsScreen() {
   const [showQRCode, setShowQRCode] = useState(false);
+  const [groupId, setGroupId] = useState(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { bar_id, table_id, user_id } = useLocalSearchParams();
 
-  console.log('En la vista de InviteClientsScreen.tsx: bar_id: ',bar_id,'user_id: ',user_id,'table_id: ',table_id)
+  console.log('Log en la vista InviteClientsScreen');
+  // console.log('Initial params:', { bar_id, table_id, user_id });
 
-  const handleInvite = () => {
-    setShowQRCode(true);
+  const handleInvite = async () => {
+    console.log('Iniciando proceso de creación de grupo...');
+    try {
+      setLoading(true);
+      // console.log('Enviando solicitud al backend con los datos:', {
+      //   name: `Grupo de ${user_id}`,
+      //   creator_user_id: user_id,
+      //   table_id: table_id,
+      // });
+
+
+      
+      // Solicitud al backend para crear el grupo
+      const response = await axios.post(`${API_URL}/api/creategroup`, {
+        name: `Grupo de ${user_id}`,
+        creator_user_id: user_id,
+        table_id: table_id
+      });
+
+      // console.log('Respuesta del backend:', response.data);
+
+      const { group_id } = response.data;
+      console.log('Grupo creado exitosamente. ID del grupo:', group_id);
+
+      setGroupId(group_id);
+      setShowQRCode(true);
+    } catch (error) {
+      console.error('Error al crear el grupo:', error.message);
+      console.log('Detalles del error:', error.response ? error.response.data : error);
+      alert('Hubo un error al crear el grupo. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleContinueAlone = () => {
-    console.log('Pasando de vista InviteClients, continuando solo a bar','bar_id',bar_id,'user_id: ',user_id,'table_id: ',table_id)
+    console.log('Continuando hacia el menú...');
     router.push(`/client/bar-details/${bar_id}?&user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}`);
   };
 
   const handleGoToMenu = () => {
-    console.log('Pasando de vista bar, luego de crear un QR de invitación:','bar_id',bar_id,'user_id: ',user_id,'table_id: ',table_id)
-    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}`);
+    console.log('Ir al menú después de crear el grupo.');
+    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${groupId}`);
   };
 
   const handleRescan = () => {
+    console.log('Volviendo a escanear QR.');
     router.push('/client/scan');
   };
 
@@ -36,20 +73,22 @@ export default function InviteClientsScreen() {
         <Ionicons name="scan-outline" size={24} color="#EF233C" />
         <Text style={styles.rescanText}>Volver a escanear</Text>
       </TouchableOpacity>
-      {!showQRCode ? (
+      {loading ? (
+        <ActivityIndicator size="large" color="#EF233C" />
+      ) : !showQRCode ? (
         <>
           <Text style={styles.questionText}>¿Deseas invitar a más personas al pedido?</Text>
           <View style={styles.buttonContainer}>
             <CustomButton title="Invitar" onPress={handleInvite} style={styles.inviteButton} />
             <CustomButton title="Continuar solo" onPress={handleContinueAlone} style={styles.continueButton} />
           </View>
-        </> 
+        </>
       ) : (
         <View style={styles.qrContainer}>
           <Text style={styles.qrText}>Escanea este código QR para unirte al pedido:</Text>
           <View style={styles.qrCodeWrapper}>
             <QRCode
-              value={`{"bar_id": "${bar_id}", "table_id": "${table_id}", "user_id": "${user_id}"}`}
+              value={`{"bar_id": "${bar_id}", "table_id": "${table_id}", "user_id": "${user_id}", "group_id": "${groupId}"}`}
               size={200}
             />
           </View>
@@ -59,6 +98,7 @@ export default function InviteClientsScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

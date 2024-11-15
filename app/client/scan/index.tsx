@@ -46,28 +46,14 @@ export default function ClientScanScreen() {
       const { bar_id, table_id, group_id } = parsedData;
       // Este es el código funcional previo a inserción de qr grupal
       // const { bar_id, table_id, group_id } = parsedData;
-      
+
       console.log("ParseData: ", parsedData)
       if (!bar_id || !table_id) {
         throw new Error('Código QR inválido, falta bar_id o table_id');
       }
       console.log("ParseData2: ", parsedData)
       console.log('Datos procesados:', { user_id, bar_id, table_id, group_id });
-      
-       // Si tiene group_id, es un QR de grupo
-    if (group_id) {
-      console.log('QR de grupo detectado');
-      // Aquí puedes manejar el flujo para unirte al grupo (por ejemplo, agregando al usuario al grupo)
-      // Si no tienes una vista de unirse, puedes invocar la API para añadir al usuario al grupo
-    
-    
-    } else {
-      console.log('QR de mesa, usuario solo');
-      // Aquí manejarías el flujo normal si no es un QR de grupo
-    }
-      
-      
-      
+
       // Combine los datos obtenidos de useLocalSearchParams() y parsedData
       const combinedData = {
         bar_id,
@@ -77,15 +63,26 @@ export default function ClientScanScreen() {
       };
       console.log('combinedData', combinedData)
 
-      // Pasamos los parámetros a la siguiente vista
-      setScannedData({ bar_id, table_id, group_id});
 
-      console.log('Datos procesados bar_id:', bar_id, 'table_id:', table_id, 'user_id: ', user_id, 'group_id: ', group_id);
+      // Si tiene group_id, es un QR de grupo
 
-      setTimeout(() => {
-        console.log('Redirigiendo a la vista como invitado con:', { user_id, bar_id, table_id });
-        router.push(`/client/scan/InviteClientsScreen?bar_id=${combinedData.bar_id}&table_id=${combinedData.table_id}&user_id=${combinedData.user_id}&group_id=${combinedData.group_id}`);
-      }, 2000);
+      if (group_id) {
+        console.log('QR de grupo detectado');
+        // Aquí puedes manejar el flujo para unirte al grupo (por ejemplo, agregando al usuario al grupo)
+        // Si no tienes una vista de unirse, puedes invocar la API para añadir al usuario al grupo
+        // Redirigir como invitado
+        router.push(`/client/bar-details/${combinedData.bar_id}?bar_id=${combinedData.bar_id}&table_id=${combinedData.table_id}&user_id=${user_id}&group_id=${combinedData.group_id}`);
+
+        console.log('Datos procesados bar_id:', combinedData.bar_id, 'table_id:', combinedData.table_id, 'user_id: ', combinedData.user_id, 'group_id: ', combinedData.group_id);
+
+
+      } else {
+        //Aquí manejamos el flujo normal si no es un QR de grupo
+        console.log('QR de mesa');
+        console.log('Datos procesados bar_id:', bar_id, 'table_id:', table_id, 'user_id: ', user_id);
+        router.push(`/client/scan/InviteClientsScreen?bar_id=${combinedData.bar_id}&table_id=${combinedData.table_id}&user_id=${combinedData.user_id}`);
+
+      }
 
     } catch (error) {
       console.error('Error al procesar el código QR:', error.message);

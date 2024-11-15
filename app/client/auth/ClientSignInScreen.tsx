@@ -41,7 +41,7 @@ const ClientSignInScreen: React.FC = () => {
         const user_id = response.data.user_id; // Asegúrate de que el backend devuelva user_id
         const user_type_id = response.data.user_type_id; // También puedes extraer el tipo de usuario si es necesario
         
-        console.log('Inicio de sesión exitoso:', { user_id, user_type_id });
+        // console.log('Inicio de sesión exitoso:', { user_id, user_type_id });
 
         Toast.show({
           type: 'success',

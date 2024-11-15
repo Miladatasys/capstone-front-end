@@ -1,9 +1,34 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 
 const AccountSettingsScreen: React.FC = () => {
   const router = useRouter();
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Confirmación",
+      "¿Estás seguro de que quieres cerrar sesión?",
+      [
+        {
+          text: "Cancelar",
+          onPress: () => console.log("Cancelado"),
+          style: "cancel",
+        },
+        {
+          text: "Cerrar sesión",
+          onPress: () => {
+            // Lógica para cerrar sesión
+            // Aquí podrías limpiar el token del usuario, por ejemplo:
+            // AsyncStorage.removeItem('userToken'); o algún otro proceso de cierre de sesión
+            console.warn("Sesión cerrada");
+            router.push('/client/auth/ClientSignInScreen');
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -25,12 +50,7 @@ const AccountSettingsScreen: React.FC = () => {
 
       <TouchableOpacity
         style={styles.optionButton}
-        onPress={() => {
-          // Lógica para cerrar sesión
-          // Aquí podríamos limpiar el token del usuario y redirigir a la pantalla de inicio de sesión
-          console.warn('Cerrar sesión');
-          router.push('/client/auth/SignInScreen');
-        }}
+        onPress={handleLogout}
       >
         <Text style={styles.optionText}>Cerrar Sesión</Text>
       </TouchableOpacity>
@@ -48,24 +68,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#2B2D42',
-    marginBottom: 20,
   },
   optionButton: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: '#F1F1F1',
     padding: 15,
-    marginBottom: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 8,
+    marginVertical: 10,
     alignItems: 'center',
   },
   optionText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#2B2D42',
-    fontWeight: 'bold',
   },
 });
 

@@ -1,40 +1,41 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import CustomButton from '../../../components/CustomButton/InviteCustomButton';
 import QRCode from 'react-native-qrcode-svg';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function InviteClientsScreen() {
   const [showQRCode, setShowQRCode] = useState(false);
   const router = useRouter();
-  const { bar_id, table_id, user_id } = useLocalSearchParams(); // Recibe el `bar_id` como parámetro
+  const { bar_id, table_id, user_id } = useLocalSearchParams();
 
   console.log('En la vista de InviteClientsScreen.tsx: bar_id: ',bar_id,'user_id: ',user_id,'table_id: ',table_id)
-  //Generar QR con datos de direccionamiento
+
   const handleInvite = () => {
-    // Muestra el código QR para que otros clientes puedan escanearlo
     setShowQRCode(true);
   };
 
   const handleContinueAlone = () => {
-    // Redirige directamente al resumen del pedido sin invitar a otros
-    //router.push(`/client/bar-details/${bar_id}/OrderSummaryScreen`);
     console.log('Pasando de vista InviteClients, continuando solo a bar','bar_id',bar_id,'user_id: ',user_id,'table_id: ',table_id)
-    //router.push(`/client/bar-details/${bar_id}?&user_id=${user_id}&table_id=${table_id}`);
     router.push(`/client/bar-details/${bar_id}?&user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}`);
-    
   };
 
   const handleGoToMenu = () => {
-    // Redirige a la pantalla de productos (Carta) después de mostrar el QR
     console.log('Pasando de vista bar, luego de crear un QR de invitación:','bar_id',bar_id,'user_id: ',user_id,'table_id: ',table_id)
     router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}`);
+  };
 
-    // router.push(`/client/bar-details/${bar_id}&${user_id}&${table_id}`);
+  const handleRescan = () => {
+    router.push('/client/scan');
   };
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.rescanButton} onPress={handleRescan}>
+        <Ionicons name="scan-outline" size={24} color="#EF233C" />
+        <Text style={styles.rescanText}>Volver a escanear</Text>
+      </TouchableOpacity>
       {!showQRCode ? (
         <>
           <Text style={styles.questionText}>¿Deseas invitar a más personas al pedido?</Text>
@@ -66,6 +67,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#f8f8f8',
+  },
+  rescanButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2B2D42',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    zIndex: 1,
+  },
+  rescanText: {
+    color: '#fff',
+    marginLeft: 8,
+    fontWeight: '600',
   },
   questionText: {
     fontSize: 22,

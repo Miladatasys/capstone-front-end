@@ -146,10 +146,7 @@ const BarOrderDetails: React.FC = () => {
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
-                style={styles.unavailableButton}
-                onPress={() => handleMarkAsUnavailable(item.name)}
               >
-                <Text style={styles.unavailableText}>Agotado</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -234,14 +231,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     width: 25,
     textAlign: 'center',
-  },
-  unavailableButton: {
-    padding: 8,
-    backgroundColor: '#EF233C',
-    borderRadius: 8,
-  },
-  unavailableText: {
-    color: '#fff',
   },
   infoText: {
     fontSize: 16,

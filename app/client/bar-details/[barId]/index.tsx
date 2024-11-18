@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import BottomNavBarDetails from '../../../../components/Navigation/BottomNavBarDetails';
-import NotificationIcon from '../../../../components/Notification/NotificationIcon';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import axios from 'axios';
 import { API_URL } from '@env';
+import ClientHeader from '../../../../components/ClientHeader/ClientHeader';
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
@@ -13,14 +13,16 @@ const BarDetailsScreen: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
-  const [hasNotification, setHasNotification] = useState(false);
 
   const productImages = {
     "cerveza artesanal": "https://th.bing.com/th/id/OIP.cm7k8KVwQDuFE8l_t-N7PQHaE8?rs=1&pid=ImgDetMain",
-    "pizza marguerita": "https://srecepty.cz/system/images/85465/full.pizza-margherita-39581-1.jpeg", // Nueva URL alternativa
-    "mojito": "https://th.bing.com/th/id/R.fd97ae8fe99292edbe7550a055a10330?rik=O6lcLwN%2fRebrpA&pid=ImgRaw&r=0"
+    "pizza marguerita": "https://srecepty.cz/system/images/85465/full.pizza-margherita-39581-1.jpeg",
+    "mojito": "https://th.bing.com/th/id/R.fd97ae8fe99292edbe7550a055a10330?rik=O6lcLwN%2fRebrpA&pid=ImgRaw&r=0",
+    "cerveza lager": "https://th.bing.com/th/id/R.c2b477bf1296bca30d2c010e92e5ddb1?rik=zuULjRpeXVsnmg&pid=ImgRaw&r=0",
+    "café americano": "https://cdn.shopify.com/s/files/1/0262/5080/5306/products/americano-1_800x.jpg?v=1618806696",
+    "tacos al pastor": "https://th.bing.com/th/id/OIP.RQdGh9n6wH2A65UUf_JEBwHaE8?rs=1&pid=ImgDetMain",
+    "whiskey old fashioned": "https://th.bing.com/th/id/R.f37e1460eac80c223d56b662efc87536?rik=DYFD9JtUdvg9tw&pid=ImgRaw&r=0"
   };
-  
 
   useEffect(() => {
     console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id });
@@ -39,13 +41,20 @@ const BarDetailsScreen: React.FC = () => {
       try {
         console.log("Obteniendo productos del bar con id:", bar_id);
         const response = await axios.get(`${API_URL}/api/bars/${bar_id}/products`);
-        setProducts(response.data.map(product => ({
+
+        // Mezclar aleatoriamente los productos para cada bar
+        const shuffledProducts = response.data.sort(() => 0.5 - Math.random());
+
+        // Asignar las imágenes a cada producto
+        const productsWithImages = shuffledProducts.map((product) => ({
           ...product,
-          image_url: productImages[product.name.toLowerCase()] || 'https://srecepty.cz/system/images/85465/full.pizza-margherita-39581-1.jpeg'  
-        })));
+          image_url: productImages[product.name.toLowerCase()] || 'https://srecepty.cz/system/images/85465/full.pizza-margherita-39581-1.jpeg',
+        }));
+
+        setProducts(productsWithImages);
 
         const initialQuantities = {};
-        response.data.forEach((product) => {
+        productsWithImages.forEach((product) => {
           initialQuantities[product.product_id] = 0;
         });
         setQuantities(initialQuantities);
@@ -72,7 +81,7 @@ const BarDetailsScreen: React.FC = () => {
         const quantity = product.product_id === prodQuantId ? newQuantity : prevQuantities[product.product_id] || 0;
         return acc + (parseFloat(product.price || '0') * quantity);
       }, 0);
-      
+
       setTotal(updatedTotal);
       return {
         ...prevQuantities,
@@ -135,10 +144,7 @@ const BarDetailsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.notificationContainer}>
-        <NotificationIcon hasNotification={hasNotification} onPress={() => router.push(`/client/bar-details/[bar_id]/manage-item`)} />
-      </View>
-
+      <ClientHeader></ClientHeader>
       <Text style={styles.title}>Productos del Bar</Text>
       <FlatList
         data={products}
@@ -192,15 +198,11 @@ const BarDetailsScreen: React.FC = () => {
 };
 
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  notificationContainer: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
   },
   title: {
     fontSize: 24,

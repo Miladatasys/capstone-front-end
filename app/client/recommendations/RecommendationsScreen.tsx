@@ -5,11 +5,20 @@ import axios from 'axios';
 import { API_URL } from '@env';
 import FilterBar from '../../../components/Filter/FilterBar';
 import BottomNavBar from '../../../components/Navigation/BottomNavBar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const barImages = [
   'https://media.traveler.es/photos/633d897b51effea580f7528b/16:9/w_2580,c_limit/Paradiso_photo_bar4.jpg',
   'https://th.bing.com/th/id/R.aa73c7a3964704e842b4be96e91afa8f?rik=G8aLeU3PIM7Tng&riu=http%3a%2f%2fwww.guiadasemana.com.br%2fcontentFiles%2fsystem%2fpictures%2f2016%2f2%2f152390%2foriginal%2fbanana-cafe.jpg&ehk=Jx%2bjTAMZQJnIKcLh1XSPmbeL%2fIX9Ln2uCcVOhQCgXbY%3d&risl=&pid=ImgRaw&r=0',
   'https://th.bing.com/th/id/R.b925b57690e40a9130a465baed768650?rik=XTO%2bgtAXBGLODQ&pid=ImgRaw&r=0',
+  'https://i0.wp.com/thehappening.com/wp-content/uploads/2018/10/barestoronto7.jpg?resize=1024%2C694&ssl=1',
+  'https://vejasp.abril.com.br/wp-content/uploads/2018/09/ax2a46541.jpg?resize=420',
+  'https://th.bing.com/th/id/OIP.rUAKIMhwM3IZGfX-Z0RbKwHaE8?rs=1&pid=ImgDetMain',
+  'https://i.pinimg.com/originals/c8/fe/47/c8fe474ba451f04e28bada1d4c5bb162.jpg',
+  'https://cdn.forbes.com.mx/2023/10/pexels-rachel-claire-5490965.webp'
+
+
+
 ];
 
 const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
@@ -61,9 +70,14 @@ const RecommendationsScreen: React.FC = () => {
     fetchBarData();
   }, []);
 
-  const onSelectBar = (bar_id: string) => {
-    router.push(`/client/scan?bar_id=${bar_id}&user_id=${user_id}&user_type_id=${user_type_id}`);
-    console.log("Navegando a escanear código QR para bar:", bar_id);
+  const onSelectBar = async (bar_id: string, barName: string) => {
+    try {
+      await AsyncStorage.setItem('selectedBarName', barName);
+      router.push(`/client/scan?bar_id=${bar_id}&user_id=${user_id}&user_type_id=${user_type_id}`);
+      console.log("Navegando a escanear código QR para bar:", bar_id);
+    } catch (error) {
+      console.error('Error al guardar el nombre del bar:', error);
+    }
   };
 
   const handleSearch = (text: string) => {
@@ -85,7 +99,7 @@ const RecommendationsScreen: React.FC = () => {
   };
 
   const renderBarCard = ({ item }: { item: any }) => (
-    <TouchableOpacity style={styles.card} onPress={() => onSelectBar(item.id)}>
+    <TouchableOpacity style={styles.card} onPress={() => onSelectBar(item.id, item.business_name)}>
       <Image
         source={{ uri: item.image || 'https://via.placeholder.com/120' }}
         style={styles.cardImage}

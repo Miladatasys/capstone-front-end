@@ -42,8 +42,11 @@ export default function ClientScanScreen() {
     console.log('Datos escaneados correctamente..');
 
     try {
+      console.log('QR Detectado: ', data);  // Log para revisar el contenido del QR
       const parsedData = JSON.parse(data);
       const { bar_id, table_id, group_id } = parsedData;
+      console.log('ParsedData:', parsedData);  // Verifica que el group_id esté presente
+
       // Este es el código funcional previo a inserción de qr grupal
       // const { bar_id, table_id, group_id } = parsedData;
 

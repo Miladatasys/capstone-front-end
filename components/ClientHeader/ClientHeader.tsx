@@ -49,19 +49,8 @@ export default function Header({
         {barName}
       </Text>
       <View style={styles.iconsContainer}>
-        <TouchableOpacity 
-          onPress={handleCartPress} 
-          style={styles.iconButton}
-          accessibilityLabel={`Carrito de compras, ${cartItemsCount} items`}
-          accessibilityHint="Toca para ver el carrito de compras"
-        >
-          <Ionicons name="cart-outline" size={24} color="black" />
-          {cartItemsCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{cartItemsCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+
+
         <TouchableOpacity 
           onPress={handleNotificationsPress} 
           style={styles.iconButton}

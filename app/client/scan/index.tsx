@@ -5,6 +5,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router'; // Asegúrate de 
 import Toast from 'react-native-toast-message';
 import SuccessToast from '../../../components/Bar/SuccessToast/SuccessToast';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { API_URL } from '@env';
 
 export default function ClientScanScreen() {
   const { user_id } = useLocalSearchParams(); // Aquí se obtiene el user_id de los parámetros de la URL
@@ -35,7 +37,7 @@ export default function ClientScanScreen() {
     );
   }
 
-  const handleBarcodeScanned = ({ data }) => {
+  const handleBarcodeScanned = async ({ data }) => {
     if (scanned) return;
 
     setScanned(true);
@@ -44,8 +46,6 @@ export default function ClientScanScreen() {
     try {
       const parsedData = JSON.parse(data);
       const { bar_id, table_id, group_id } = parsedData;
-      // Este es el código funcional previo a inserción de qr grupal
-      // const { bar_id, table_id, group_id } = parsedData;
 
       console.log("ParseData: ", parsedData)
       if (!bar_id || !table_id) {
@@ -66,16 +66,32 @@ export default function ClientScanScreen() {
 
       // Si tiene group_id, es un QR de grupo
 
-      if (group_id) {
+      // if (group_id ) {
+      if (group_id != undefined) {
         console.log('QR de grupo detectado');
-        // Aquí puedes manejar el flujo para unirte al grupo (por ejemplo, agregando al usuario al grupo)
-        // Si no tienes una vista de unirse, puedes invocar la API para añadir al usuario al grupo
-        // Redirigir como invitado
-        router.push(`/client/bar-details/${combinedData.bar_id}?bar_id=${combinedData.bar_id}&table_id=${combinedData.table_id}&user_id=${user_id}&group_id=${combinedData.group_id}`);
+        try {
+          const response = await axios.post(`${API_URL}/api/group/${group_id}/join`, {
+              user_id,
+          });
+          console.log('Usuario unido al grupo exitosamente:', response.data);
 
-        console.log('Datos procesados bar_id:', combinedData.bar_id, 'table_id:', combinedData.table_id, 'user_id: ', combinedData.user_id, 'group_id: ', combinedData.group_id);
+          Toast.show({
+              type: 'success',
+              text1: 'Unión exitosa',
+              text2: 'Te has unido al grupo correctamente.',
+          });
 
-
+          // Redirigir a la vista del grupo
+          router.push(`/client/bar-details/${bar_id}?bar_id=${bar_id}&table_id=${table_id}&user_id=${user_id}&group_id=${group_id}`);
+      } catch (error) {
+          console.error('Error al unirse al grupo:', error.response?.data || error.message);
+          Toast.show({
+              type: 'error',
+              text1: 'Error al unirse al grupo',
+              text2: error.response?.data?.message || 'Inténtalo de nuevo.',
+          });
+          setScanned(false);
+      }
       } else {
         //Aquí manejamos el flujo normal si no es un QR de grupo
         console.log('QR de mesa');

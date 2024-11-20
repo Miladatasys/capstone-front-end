@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Product {
   id: string;
@@ -13,21 +14,26 @@ interface Product {
   available: boolean;
 }
 
-const OrderSummaryScreen: React.FC = () => {
+interface Order {
+  products: Product[];
+  orderTime: string;
+  total: number;
+}
+
+export default function OrderSummaryScreen() {
   const router = useRouter();
-  const { products: productsParam, table_id, bar_id } = useLocalSearchParams(); 
-  const [products, setProducts] = useState<Product[]>([]);
+  const { products: productsParam, table_id, bar_id, user_id, group_id, userName } = useLocalSearchParams();
+  const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState<number>(0);
-  const [originalTotal, setOriginalTotal] = useState<number | null>(null);
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null); 
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof productsParam === 'string') {
       try {
-        const parsedProducts = JSON.parse(productsParam);
-        if (Array.isArray(parsedProducts)) {
-          setProducts(parsedProducts);
-          calculateOriginalTotal(parsedProducts);
+        const parsedOrders = JSON.parse(productsParam);
+        if (Array.isArray(parsedOrders)) {
+          setOrders(parsedOrders);
+          calculateTotal(parsedOrders);
         } else {
           Toast.show({
             type: 'error',
@@ -43,21 +49,10 @@ const OrderSummaryScreen: React.FC = () => {
         });
       }
     }
-  }, [productsParam, table_id]);
+  }, [productsParam]);
 
-  useEffect(() => {
-    calculateTotal();
-  }, [products]);
-
-  const calculateOriginalTotal = (products: Product[]) => {
-    const totalValue = products.reduce((total, product) => total + product.price * (product.originalQuantity || product.quantity), 0);
-    setOriginalTotal(totalValue);
-  };
-
-  const calculateTotal = () => {
-    const totalValue = products
-      .filter((product) => product.available)
-      .reduce((total, product) => total + product.price * product.quantity, 0);
+  const calculateTotal = (orders: Order[]) => {
+    const totalValue = orders.reduce((acc, order) => acc + order.total, 0);
     setTotal(totalValue);
   };
 
@@ -67,9 +62,9 @@ const OrderSummaryScreen: React.FC = () => {
       text1: 'Pedido Confirmado',
       text2: 'Procediendo al pago...',
     });
-    
+
     router.push({
-      pathname: `/client/bar-details/${bar_id}/PaymentMethodScreen`, 
+      pathname: `/client/bar-details/${bar_id}/PaymentMethodScreen`,
       params: {
         paymentMethod: selectedMethod,
         total,
@@ -79,80 +74,64 @@ const OrderSummaryScreen: React.FC = () => {
     });
   };
 
-  const handleCancelOrder = () => {
-    
-    // Redirigir a la vista de productos del bar en lugar de volver
-    if (bar_id) {
-      router.push(`/client/bar-details/${bar_id}/index`);
-    } else {
-      console.error("Error: bar_id no está definido.");
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'No se pudo redirigir a la carta de productos. bar_id no está definido.',
-      });
-    }
+  const handleContinueOrdering = () => {
+    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${group_id}`);
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Resumen del Pedido</Text>
-
+  const renderOrderItem = ({ item }: { item: Order }) => (
+    <View style={styles.orderContainer}>
+      <View style={styles.orderInfo}>
+        <Text style={styles.orderInfoText}>Hora del pedido: {item.orderTime}</Text>
+      </View>
       <FlatList
-        data={products}
-        renderItem={({ item }) => (
+        data={item.products}
+        renderItem={({ item: product }) => (
           <View style={styles.productCard}>
             <View style={styles.productInfo}>
-              <Text style={styles.productName}>{item.name}</Text>
-              <Text style={styles.productPrice}>C/U ${item.price.toLocaleString()}</Text>
-              <View style={styles.row}>
-                {!item.available && item.originalQuantity && (
-                  <View style={[styles.column, styles.alignLeft]}>
-                    <Text style={styles.columnTitle}>Antes</Text>
-                    <Text style={styles.strikeThrough}>
-                      {item.originalQuantity} unidades
-                    </Text>
-                    <Text style={styles.strikeThrough}>
-                      Subtotal: ${(item.price * item.originalQuantity).toLocaleString()}
-                    </Text>
-                  </View>
-                )}
-                <View style={[styles.column, styles.alignRight]}>
-                  <Text style={styles.columnTitle}>{!item.available ? "Después" : ""}</Text>
-                  <Text>
-                    {item.quantity.toString().padStart(2, '0')} unidades
-                  </Text>
-                  <Text>
-                    Subtotal: ${(item.price * item.quantity).toLocaleString()}
-                  </Text>
-                </View>
-              </View>
+              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productPrice}>${product.price.toLocaleString()}</Text>
             </View>
-            <View style={styles.productIcon}>
-              <Ionicons name={item.available ? "checkmark-circle" : "close-circle"} size={24} color={item.available ? "green" : "red"} />
+            <View style={styles.quantityContainer}>
+              <Text style={styles.quantity}>{product.quantity}</Text>
+              <Ionicons 
+                name={product.available ? "checkmark-circle" : "close-circle"} 
+                size={20} 
+                color={product.available ? "#4CAF50" : "#F44336"} 
+              />
             </View>
           </View>
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(product) => product.id}
       />
+      <Text style={styles.orderTotal}>Total de la comanda: ${item.total.toLocaleString()}</Text>
+    </View>
+  );
 
-      <View style={styles.footer}>
-        <View style={styles.row}>
-          <View style={[styles.column, styles.alignLeft]}>
-            <Text style={styles.totalText}>
-              <Text style={styles.strikeThrough}>Total: ${originalTotal?.toLocaleString()}</Text>
-            </Text>
-          </View>
-          <View style={[styles.column, styles.alignRight]}>
-            <Text style={styles.totalText}>Total: ${total.toLocaleString()}</Text>
-          </View>
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.content}>
+        <Text style={styles.title}>Comandas</Text>
+        
+        <FlatList
+          data={orders}
+          renderItem={renderOrderItem}
+          keyExtractor={(item, index) => index.toString()}
+          contentContainerStyle={styles.listContent}
+        />
+      </View>
+
+      <View style={styles.bottomContainer}>
+        <View style={styles.totalBar}>
+          <Text style={styles.totalLabel}>Total:</Text>
+          <Text style={styles.totalAmount}>${total.toLocaleString()}</Text>
         </View>
-        <View style={styles.buttonContainer}>
-          <Pressable style={styles.confirmButton} onPress={handleConfirmOrder}>
-            <Text style={styles.confirmButtonText}>Aceptar</Text>
+        <View style={styles.buttonBar}>
+          <Pressable style={[styles.button, styles.continueButton]} onPress={handleContinueOrdering}>
+            <Text style={styles.buttonText}>Seguir pidiendo</Text>
           </Pressable>
-          <Pressable style={styles.cancelButton} onPress={handleCancelOrder}>
-            <Text style={styles.cancelButtonText}>Modificar</Text>
+          <Pressable style={[styles.button, styles.confirmButton]} onPress={handleConfirmOrder}>
+            <Text style={styles.buttonText}>Pagar</Text>
           </Pressable>
         </View>
       </View>
@@ -160,112 +139,134 @@ const OrderSummaryScreen: React.FC = () => {
       <Toast />
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#FFFFFF',
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2B2D42',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#333333',
     marginVertical: 20,
     textAlign: 'center',
+  },
+  listContent: {
+    paddingBottom: 20,
+  },
+  orderContainer: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  orderInfo: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  orderInfoText: {
+    fontSize: 16,
+    color: '#333333',
+    marginBottom: 5,
   },
   productCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    elevation: 2,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   productInfo: {
     flex: 1,
   },
-  productIcon: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   productName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2B2D42',
-  },
-  productPrice: {
     fontSize: 16,
-    color: '#888',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  column: {
-    flex: 1,
-  },
-  alignLeft: {
-    alignItems: 'flex-start',
-  },
-  alignRight: {
-    alignItems: 'flex-end',
-  },
-  columnTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#666',
+    fontWeight: '600',
+    color: '#333333',
     marginBottom: 4,
   },
-  strikeThrough: {
-    textDecorationLine: 'line-through',
-    color: '#C71F33',
+  productPrice: {
+    fontSize: 14,
+    color: '#666666',
   },
-  footer: {
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    paddingVertical: 20,
-    paddingHorizontal: 10,
-    backgroundColor: '#fff',
-  },
-  totalText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2B2D42',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  buttonContainer: {
+  quantityContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  quantity: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  orderTotal: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333333',
+    marginTop: 16,
+    textAlign: 'right',
+  },
+  bottomContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  totalBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  totalLabel: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  totalAmount: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#333333',
+  },
+  buttonBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  continueButton: {
+    backgroundColor: '#0077b6',
+    marginRight: 10,
   },
   confirmButton: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 5,
-    alignItems: 'center',
+    marginLeft: 10,
   },
-  confirmButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  cancelButton: {
-    backgroundColor: '#888',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
-
-export default OrderSummaryScreen;

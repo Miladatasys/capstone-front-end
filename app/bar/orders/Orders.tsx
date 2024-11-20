@@ -1,149 +1,109 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions, SafeAreaView, StatusBar } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import BarBottomBar from '../../../components/Bar/BottomBar/BarBottomBar';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Order {
   id: string;
   table: string;
   items: string;
   total: number;
-  status: string;
+  status: 'Rechazado' | 'Aceptado' | 'Cancelado por cliente';
+  timestamp: string;
 }
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const router = useRouter();
 
-  // Datos simulados actualizados con los nuevos estados
   const ordersData: Order[] = [
-    { id: '1', table: 'Mesa 1', items: 'Cerveza, Pisco Sour', total: 12000, status: 'Propuesta pendiente' },
-    { id: '2', table: 'Mesa 2', items: 'Vodka, Papas Fritas', total: 8000, status: 'Aceptado' },
-    { id: '3', table: 'Mesa 3', items: 'Pizza', total: 15000, status: 'Cancelado por cliente' },
-    { id: '4', table: 'Mesa 4', items: 'Cerveza', total: 4000, status: 'Rechazado por bar' },
+    { id: '1', table: 'Mesa 1', items: 'Cerveza, Pisco Sour', total: 12000, status: 'Aceptado', timestamp: '2023-05-20T14:30:00Z' },
+    { id: '2', table: 'Mesa 2', items: 'Vodka, Papas Fritas', total: 8000, status: 'Aceptado', timestamp: '2023-05-20T15:15:00Z' },
+    { id: '3', table: 'Mesa 3', items: 'Pizza', total: 15000, status: 'Cancelado por cliente', timestamp: '2023-05-20T16:00:00Z' },
+    { id: '4', table: 'Mesa 4', items: 'Cerveza', total: 4000, status: 'Rechazado', timestamp: '2023-05-20T16:45:00Z' },
   ];
 
   useEffect(() => {
-    // Cuando el backend esté disponible, descomentar el siguiente bloque para hacer la solicitud.
-    // const fetchOrders = async () => {
-    //   try {
-    //     const response = await axios.get('URL_DEL_BACKEND/api/orders'); // Cambia 'URL_DEL_BACKEND' por la URL real
-    //     setOrders(response.data); // Actualiza los pedidos con los datos obtenidos del backend
-    //   } catch (error) {
-    //     console.error('Error al obtener los pedidos:', error);
-    //   }
-    // };
-
-    // fetchOrders(); // Llama a la función para obtener los pedidos desde el backend
-
-    // Por ahora, usamos los datos simulados
     setOrders(ordersData);
   }, []);
 
   const renderOrderItem = ({ item }: { item: Order }) => (
-    <TouchableOpacity onPress={() => router.push(`/bar/orders/OrderDetail?id=${item.id}`)}>
-      <View style={styles.orderItem}>
-        <Text style={styles.tableText}>Mesa: {item.table}</Text>
-        <Text style={styles.itemsText}>Items: {item.items}</Text>
-        <Text style={styles.totalText}>Total: ${item.total}</Text>
-        <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-          Estado: {item.status}
-        </Text>
+    <TouchableOpacity
+      style={styles.orderItem}
+      onPress={() => router.push(`/bar/orders/OrderDetail?id=${item.id}`)}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver detalles del pedido de ${item.table}`}
+    >
+      <View style={styles.orderHeader}>
+        <Text style={styles.tableText}>{item.table}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+          <Text style={styles.statusText}>{item.status}</Text>
+        </View>
+      </View>
+      <Text style={styles.itemsText}>{item.items}</Text>
+      <View style={styles.orderFooter}>
+        <Text style={styles.totalText}>${item.total.toLocaleString()}</Text>
+        <Text style={styles.timestampText}>{new Date(item.timestamp).toLocaleTimeString()}</Text>
       </View>
     </TouchableOpacity>
   );
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: Order['status']) => {
     switch (status) {
-      case 'Propuesta pendiente':
-        return '#FCA311'; // Mostaza para propuesta pendiente
       case 'Aceptado':
-        return '#4CAF50'; // Verde para aceptado
+        return '#4CAF50';
       case 'Cancelado por cliente':
-        return '#EF233C'; // Rojo para cancelado por cliente
-      case 'Rechazado por bar':
-        return '#FF6347'; // Tomate para rechazos
+        return '#EF233C';
+      case 'Rechazado':
+        return '#FF6347';
       default:
         return '#000';
     }
   };
 
-  const filterOrdersByStatus = (status: string) => {
+  const filterOrdersByStatus = (status: Order['status'] | 'Todos') => {
     if (status === 'Todos') return orders;
     return orders.filter(order => order.status === status);
   };
 
-  const renderPendingOrders = () => (
+  const renderOrders = (status: Order['status'] | 'Todos') => () => (
     <FlatList
-      data={filterOrdersByStatus('Pendiente')}
+      data={filterOrdersByStatus(status)}
       renderItem={renderOrderItem}
       keyExtractor={item => item.id}
-    />
-  );
-
-  const renderInProgressOrders = () => (
-    <FlatList
-      data={filterOrdersByStatus('Propuesta pendiente')}
-      renderItem={renderOrderItem}
-      keyExtractor={item => item.id}
-    />
-  );
-
-  const renderCompletedOrders = () => (
-    <FlatList
-      data={filterOrdersByStatus('Aceptado')}
-      renderItem={renderOrderItem}
-      keyExtractor={item => item.id}
-    />
-  );
-
-  const renderCancelledOrders = () => (
-    <FlatList
-      data={filterOrdersByStatus('Cancelado por cliente')}
-      renderItem={renderOrderItem}
-      keyExtractor={item => item.id}
-    />
-  );
-
-  const renderRejectedOrders = () => (
-    <FlatList
-      data={filterOrdersByStatus('Rechazado por bar')}
-      renderItem={renderOrderItem}
-      keyExtractor={item => item.id}
-    />
-  );
-
-  const renderAllOrders = () => (
-    <FlatList
-      data={filterOrdersByStatus('Todos')}
-      renderItem={renderOrderItem}
-      keyExtractor={item => item.id}
+      contentContainerStyle={styles.listContent}
     />
   );
 
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'all', title: 'Todos' },
-    { key: 'pending', title: 'Pendiente' },
-    { key: 'inProgress', title: 'Propuesta pendiente' },
-    { key: 'completed', title: 'Aceptado' },
-    { key: 'cancelled', title: 'Cancelado por cliente' },
-    { key: 'rejected', title: 'Rechazado por bar' },
+    { key: 'accepted', title: 'Aceptado' },
+    { key: 'cancelled', title: 'Cancelado' },
+    { key: 'rejected', title: 'Rechazado' },
   ]);
 
   const renderScene = SceneMap({
-    pending: renderPendingOrders,
-    inProgress: renderInProgressOrders,
-    completed: renderCompletedOrders,
-    cancelled: renderCancelledOrders,
-    rejected: renderRejectedOrders,
-    all: renderAllOrders,
+    all: renderOrders('Todos'),
+    accepted: renderOrders('Aceptado'),
+    cancelled: renderOrders('Cancelado por cliente'),
+    rejected: renderOrders('Rechazado'),
   });
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Pedidos Activos</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#333" />
+      <View style={styles.header}>
+        <Text style={styles.title}>Pedidos</Text>
+        <TouchableOpacity 
+          onPress={() => router.push('/bar/auth/BarSignInScreen')} 
+          accessibilityLabel="Ir a inicio"
+        >
+          <Ionicons name="exit-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       <TabView
         navigationState={{ index, routes }}
@@ -154,69 +114,107 @@ const Orders: React.FC = () => {
           <TabBar
             {...props}
             scrollEnabled={true}
-            indicatorStyle={{ backgroundColor: '#EF233C' }}
+            indicatorStyle={styles.tabIndicator}
             style={styles.tabBar}
             labelStyle={styles.tabLabel}
+            tabStyle={styles.tab}
+            activeColor="#EF233C"
+            inactiveColor="#333"
           />
         )}
       />
 
       <BarBottomBar />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 16,
+    backgroundColor: '#333',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#000',
+    color: '#fff',
+  },
+  listContent: {
+    padding: 16,
   },
   orderItem: {
-    backgroundColor: '#F5F5F5',
-    padding: 14,
-    borderRadius: 8,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  orderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   tableText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   itemsText: {
     fontSize: 14,
     color: '#555',
+    marginBottom: 8,
+  },
+  orderFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   totalText: {
-    fontSize: 14,
-    marginTop: 4,
-    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
   },
-  statusText: {
-    fontSize: 13,
-    marginTop: 4,
+  timestampText: {
+    fontSize: 12,
+    color: '#888',
   },
   tabBar: {
     backgroundColor: '#fff',
     elevation: 0,
     shadowOpacity: 0,
-    borderBottomColor: '#EF233C',
-    borderBottomWidth: 1,
+  },
+  tabIndicator: {
+    backgroundColor: '#EF233C',
   },
   tabLabel: {
     fontWeight: '600',
     fontSize: 14,
-    color: '#EF233C',
+    textTransform: 'uppercase',
+  },
+  tab: {
+    width: 'auto',
   },
 });
 

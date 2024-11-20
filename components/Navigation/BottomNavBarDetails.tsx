@@ -28,16 +28,15 @@ const BottomNavBarDetails: React.FC = () => {
       </TouchableOpacity>
 
       {/* Botón de Escanear */}
-      <TouchableOpacity onPress={() => router.push(`/client/bar-details/${barId}/OrderDetailScreen`)}>
         <View style={styles.iconContainer}>
           <Ionicons
-            name="basket-outline"
+            name="book-outline"
             size={24}
             color={getTabColor(['/client/bar-details', '/client/orders'])}
           />
-          <Text style={getTextStyle(['/client/bar-details', '/client/orders'])}>Pedidos</Text>
+          <Text style={getTextStyle(['/client/bar-details', '/client/orders'])}>Carta</Text>
         </View>
-      </TouchableOpacity>
+
 
       {/* Botón de Historial de Pedidos */}
       <TouchableOpacity onPress={() => router.push(`/client/bar-details/${barId}/OrdersHistoryScreen`)}>

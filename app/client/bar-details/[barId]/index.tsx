@@ -6,13 +6,15 @@ import Toast from 'react-native-toast-message';
 import axios from 'axios';
 import { API_URL } from '@env';
 import ClientHeader from '../../../../components/ClientHeader/ClientHeader';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
-  const { bar_id, table_id, user_id } = useLocalSearchParams(); // VERIFICAR SI SE RECIBE correctamente bar_id y table_id
+  const { bar_id, table_id, user_id } = useLocalSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
+  const [existingOrders, setExistingOrders] = useState<any[]>([]);
 
   const productImages = {
     "cerveza artesanal": "https://th.bing.com/th/id/OIP.cm7k8KVwQDuFE8l_t-N7PQHaE8?rs=1&pid=ImgDetMain",
@@ -25,8 +27,6 @@ const BarDetailsScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    console.log("Parámetros recibidos en BarDetailsScreen: ", { bar_id, table_id });
-
     if (!bar_id || !table_id) {
       console.error("Error: El bar_id o table_id no fueron proporcionados.");
       Toast.show({
@@ -39,18 +39,12 @@ const BarDetailsScreen: React.FC = () => {
 
     const fetchProducts = async () => {
       try {
-        console.log("Obteniendo productos del bar con id:", bar_id);
         const response = await axios.get(`${API_URL}/api/bars/${bar_id}/products`);
-
-        // Mezclar aleatoriamente los productos para cada bar
         const shuffledProducts = response.data.sort(() => 0.5 - Math.random());
-
-        // Asignar las imágenes a cada producto
         const productsWithImages = shuffledProducts.map((product) => ({
           ...product,
           image_url: productImages[product.name.toLowerCase()] || 'https://srecepty.cz/system/images/85465/full.pizza-margherita-39581-1.jpeg',
         }));
-
         setProducts(productsWithImages);
 
         const initialQuantities = {};
@@ -69,7 +63,20 @@ const BarDetailsScreen: React.FC = () => {
     };
 
     fetchProducts();
+    loadExistingOrders();
   }, [bar_id, table_id]);
+
+  const loadExistingOrders = async () => {
+    try {
+      const existingOrdersString = await AsyncStorage.getItem(`existingOrders_${bar_id}_${table_id}`);
+      if (existingOrdersString) {
+        const parsedOrders = JSON.parse(existingOrdersString);
+        setExistingOrders(parsedOrders);
+      }
+    } catch (error) {
+      console.error("Error loading existing orders:", error);
+    }
+  };
 
   const updateQuantity = (prodQuantId: string, isIncrement: boolean) => {
     setQuantities((prevQuantities) => {
@@ -90,7 +97,7 @@ const BarDetailsScreen: React.FC = () => {
     });
   };
 
-  const handleRequestOrder = () => {
+  const handleRequestOrder = async () => {
     const selectedProducts = products
       .filter((product) => quantities[product.product_id] > 0)
       .map((product) => ({
@@ -104,35 +111,35 @@ const BarDetailsScreen: React.FC = () => {
       .filter(product => product.product_id && product.quantity > 0 && product.price > 0);
 
     if (selectedProducts.length > 0) {
-      const productsString = JSON.stringify(selectedProducts);
-
-      const sendOrder = async () => {
-        try {
-          const response = await axios.post(`${API_URL}/api/orders`, {
-            products: selectedProducts,
-            table_id: table_id,
-            bar_id: bar_id,
-            user_id: user_id
-          });
-          Toast.show({
-            type: 'success',
-            text1: 'Pedido enviado',
-            text2: 'Esperando confirmación del bar...',
-          });
-        } catch (error) {
-          Toast.show({
-            type: 'error',
-            text1: 'Error al enviar pedido',
-            text2: 'No se pudo enviar el pedido. Inténtalo de nuevo.',
-          });
-        }
+      const newOrder = {
+        products: selectedProducts,
+        orderTime: new Date().toLocaleString(),
+        total: total
       };
 
-      sendOrder();
+      const updatedExistingOrders = [...existingOrders, newOrder];
+      setExistingOrders(updatedExistingOrders);
+
+      try {
+        await AsyncStorage.setItem(`existingOrders_${bar_id}_${table_id}`, JSON.stringify(updatedExistingOrders));
+      } catch (error) {
+        console.error("Error saving existing orders:", error);
+      }
+
+      const productsString = JSON.stringify(updatedExistingOrders);
+
       router.push({
         pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
-        params: { products: productsString, table_id, bar_id },
+        params: { products: productsString, table_id, bar_id, user_id },
       });
+
+      // Reset quantities after adding to order
+      const resetQuantities = {};
+      products.forEach((product) => {
+        resetQuantities[product.product_id] = 0;
+      });
+      setQuantities(resetQuantities);
+      setTotal(0);
     } else {
       Toast.show({
         type: 'info',
@@ -144,7 +151,7 @@ const BarDetailsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ClientHeader></ClientHeader>
+      <ClientHeader />
       <Text style={styles.title}>Productos del Bar</Text>
       <FlatList
         data={products}

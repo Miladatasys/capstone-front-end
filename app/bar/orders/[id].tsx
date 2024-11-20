@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, FlatList, SafeAreaView, StatusBar } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-// import axios from 'axios'; // Descomentar esto cuando el backend esté listo
+import { Ionicons } from '@expo/vector-icons';
 
 interface Order {
   id: string;
@@ -12,16 +12,13 @@ interface Order {
   customer: string;
 }
 
-const BarOrderDetails: React.FC = () => {
+export default function BarOrderDetails() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
 
   const [order, setOrder] = useState<Order | null>(null);
-  const [adjustedItems, setAdjustedItems] = useState<Order['items']>([]);
-  const [adjustedTotal, setAdjustedTotal] = useState<number>(0);
 
   useEffect(() => {
-    // Simulación de datos (descomentar para usar el backend)
     const simulatedOrder: Order = {
       id: id as string,
       table: '3',
@@ -37,62 +34,19 @@ const BarOrderDetails: React.FC = () => {
     };
 
     setOrder(simulatedOrder);
-    setAdjustedItems(simulatedOrder.items);
-    setAdjustedTotal(simulatedOrder.total);
   }, [id]);
 
-  const handleChangeQuantity = (itemName: string, change: number) => {
-    setAdjustedItems((prevItems) => {
-      return prevItems.map((item) => {
-        if (item.name === itemName) {
-          const newQuantity = Math.max(0, item.quantity + change);
-          // Ajustar el total basado en la nueva cantidad
-          setAdjustedTotal((prevTotal) => {
-            const priceDifference = (newQuantity - item.quantity) * item.price;
-            return Math.max(0, prevTotal + priceDifference);
-          });
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      });
-    });
-  };
-
-  const handleMarkAsUnavailable = (itemName: string) => {
-    setAdjustedItems((prevItems) =>
-      prevItems.map((item) =>
-        item.name === itemName
-          ? {
-              ...item,
-              quantity: 0, // Poner cantidad a 0 para marcarlo como agotado
-            }
-          : item
-      )
-    );
-
-    // Actualizar el total ajustado al marcar como agotado
-    const item = adjustedItems.find((item) => item.name === itemName);
-    if (item) {
-      setAdjustedTotal((prevTotal) => Math.max(0, prevTotal - item.price * item.quantity));
-    }
-  };
-
   const handleConfirmOrder = () => {
-    Alert.alert('Confirmación', '¿Confirmar este pedido ajustado?', [
+    Alert.alert('Confirmación', '¿Confirmar este pedido?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Aceptar',
         onPress: () => {
-          Alert.alert('Éxito', 'El pedido ha sido confirmado con los productos disponibles.');
+          Alert.alert('Éxito', 'El pedido ha sido confirmado.');
           router.push('/bar/orders/Orders');
         },
       },
     ]);
-  };
-
-  const handleProposeChange = () => {
-    Alert.alert('Cambio propuesto', 'Propuesta de cambio enviada al cliente.');
-    router.push('/bar/orders/Orders');
   };
 
   const handleRejectOrder = () => {
@@ -109,150 +63,178 @@ const BarOrderDetails: React.FC = () => {
   };
 
   if (!order) {
-    return <Text>Cargando...</Text>;
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Cargando...</Text>
+      </View>
+    );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <Text style={styles.title}>Revisar Pedido</Text>
-        <TouchableOpacity style={styles.rejectButton} onPress={handleRejectOrder}>
-          <Text style={styles.rejectButtonText}>Rechazar Pedido</Text>
+        <Text style={styles.title}>Detalles del Pedido</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
       </View>
 
+      <View style={styles.orderInfo}>
+        <View style={styles.infoItem}>
+          <Ionicons name="restaurant" size={20} color="#666" />
+          <Text style={styles.infoText}>Mesa: {order.table}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Ionicons name="person" size={20} color="#666" />
+          <Text style={styles.infoText}>Cliente: {order.customer}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Ionicons name="pricetag" size={20} color="#666" />
+          <Text style={styles.infoText}>Total: ${order.total.toLocaleString()}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Productos</Text>
       <FlatList
-        data={adjustedItems}
+        data={order.items}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
           <View style={styles.itemBox}>
-            <Text style={styles.itemName}>{item.name}</Text>
-            <View style={styles.actionsContainer}>
-              <View style={styles.quantityContainer}>
-                <Text style={styles.quantityText}>
-                  {item.quantity.toLocaleString('en-US', { minimumIntegerDigits: 2 })}
-                </Text>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => handleChangeQuantity(item.name, -1)}
-                >
-                  <Text style={styles.quantityText}>-</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => handleChangeQuantity(item.name, 1)}
-                >
-                  <Text style={styles.quantityText}>+</Text>
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity
-              >
-              </TouchableOpacity>
+            <View style={styles.itemInfo}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <Text style={styles.itemPrice}>${item.price.toLocaleString()}</Text>
+            </View>
+            <View style={styles.quantityBox}>
+              <Text style={styles.quantityText}>{item.quantity}</Text>
             </View>
           </View>
         )}
+        style={styles.itemList}
       />
 
-      <Text style={styles.infoText}>Mesa: {order.table}</Text>
-      <Text style={styles.infoText}>Cliente: {order.customer}</Text>
-      <Text style={styles.infoText}>Total ajustado: ${adjustedTotal.toLocaleString()}</Text>
-
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.button, styles.proposeButton]} onPress={handleProposeChange}>
-          <Text style={styles.buttonText}>Proponer Cambio</Text>
+        <TouchableOpacity style={styles.rejectButton} onPress={handleRejectOrder}>
+          <Text style={styles.buttonText}>Rechazar Pedido</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.completedButton]} onPress={handleConfirmOrder}>
+        <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmOrder}>
           <Text style={styles.buttonText}>Confirmar Pedido</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
     padding: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 25,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 40,
   },
-  rejectButton: {
-    backgroundColor: '#EF233C',
+  backButton: {
     padding: 8,
-    borderRadius: 8,
-    marginTop: 10,
-    marginBottom: 50,
   },
-  rejectButtonText: {
-    color: '#fff',
+  orderInfo: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    elevation: 2,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  infoText: {
     fontSize: 16,
+    color: '#333',
+    marginLeft: 8,
+  },
+  sectionTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  itemList: {
+    flex: 1,
   },
   itemBox: {
-    backgroundColor: '#F5F5F5',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    elevation: 2,
+  },
+  itemInfo: {
+    flex: 1,
   },
   itemName: {
     fontSize: 16,
     fontWeight: 'bold',
-    width: '40%',
+    color: '#333',
+    marginBottom: 4,
   },
-  actionsContainer: {
-    flexDirection: 'row',
+  itemPrice: {
+    fontSize: 14,
+    color: '#666',
+  },
+  quantityBox: {
+    backgroundColor: '#e9ecef',
+    borderRadius: 8,
+    padding: 8,
+    minWidth: 40,
     alignItems: 'center',
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  quantityButton: {
-    backgroundColor: '#ddd',
-    padding: 5,
-    borderRadius: 5,
-    marginHorizontal: 5,
   },
   quantityText: {
-    fontSize: 18,
-    width: 25,
-    textAlign: 'center',
-  },
-  infoText: {
     fontSize: 16,
-    marginVertical: 5,
+    fontWeight: 'bold',
+    color: '#495057',
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     marginTop: 20,
   },
-  button: {
+  rejectButton: {
+    backgroundColor: '#dc3545',
+    padding: 16,
+    borderRadius: 12,
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
+    marginRight: 8,
     alignItems: 'center',
-    marginHorizontal: 5,
   },
-  completedButton: {
-    backgroundColor: '#4CAF50',
-  },
-  proposeButton: {
-    backgroundColor: '#FCA311',
+  confirmButton: {
+    backgroundColor: '#28a745',
+    padding: 16,
+    borderRadius: 12,
+    flex: 1,
+    marginLeft: 8,
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
@@ -260,5 +242,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-export default BarOrderDetails;

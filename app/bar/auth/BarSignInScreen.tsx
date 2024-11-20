@@ -20,13 +20,15 @@ const BarSignInScreen: React.FC = () => {
     router.push("/bar/auth/BarForgotPasswordScreen");
   };
 
-// Modificación en BarSignInScreen.tsx
+  const onWaiterAccessPressed = () => {
+    // Acceso directo para el mesero sin login
+    router.push("/waiter/WaiterHomeScreen");
+  };
 
-const onWaiterAccessPressed = () => {
-  // Acceso directo para el mesero sin login
-  router.push("/waiter/WaiterHomeScreen");
-};
-
+  const onClientAccessPressed = () => {
+    // Navegar a la pantalla de inicio de sesión del cliente
+    router.push("/client/auth/ClientSignInScreen");
+  };
 
   return (
     <View style={styles.container}>
@@ -65,6 +67,11 @@ const onWaiterAccessPressed = () => {
       {/* Opción minimalista para el mesero */}
       <TouchableOpacity onPress={onWaiterAccessPressed} style={styles.waiterButton}>
         <Text style={styles.waiterButtonText}>Acceder como mesero</Text>
+      </TouchableOpacity>
+
+      {/* Opción minimalista y elegante para el cliente */}
+      <TouchableOpacity onPress={onClientAccessPressed} style={styles.clientButton}>
+        <Text style={styles.clientButtonText}>Iniciar como cliente</Text>
       </TouchableOpacity>
     </View>
   );
@@ -125,6 +132,19 @@ const styles = StyleSheet.create({
   },
   waiterButtonText: {
     color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  clientButton: {
+    marginTop: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#2B2D42',
+    borderRadius: 10,
+    width: '60%',
+  },
+  clientButtonText: {
+    color: '#2B2D42',
     textAlign: 'center',
     fontSize: 16,
   },

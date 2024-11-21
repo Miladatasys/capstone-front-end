@@ -67,12 +67,14 @@ export default function OrderSummaryScreen() {
   const handleConfirmOrder = async () => {
     try {
       await AsyncStorage.setItem(`pendingOrders_${bar_id}_${table_id}`, JSON.stringify(orders));
-      
+    
       Toast.show({
         type: 'success',
         text1: 'Pedido Confirmado',
         text2: 'Procediendo al pago...',
       });
+
+      await cleanOrders();
 
       router.push({
         pathname: `/client/bar-details/${bar_id}/PaymentMethodScreen`,
@@ -97,7 +99,28 @@ export default function OrderSummaryScreen() {
   };
 
   const handleCancelOrder = () => {
+    cleanOrders();
     router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${group_id}`);
+  };
+
+  const cleanOrders = async () => {
+    try {
+      await AsyncStorage.removeItem(`pendingOrders_${bar_id}_${table_id}`);
+      setOrders([]);
+      setTotal(0);
+      Toast.show({
+        type: 'success',
+        text1: 'Comandas limpiadas',
+        text2: 'Se han eliminado todas las comandas pendientes.',
+      });
+    } catch (error) {
+      console.error('Error cleaning orders:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudieron limpiar las comandas. Por favor, inténtelo de nuevo.',
+      });
+    }
   };
 
   const renderProductItem = useCallback(({ item: product }: { item: Product }) => (

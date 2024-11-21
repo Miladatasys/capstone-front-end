@@ -1,45 +1,40 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const OrderConfirmationScreen: React.FC = () => {
+export default function OrderConfirmationScreen() {
   const router = useRouter();
-  const { paymentMethod, barId, total } = useLocalSearchParams();
+  const { paymentMethod, bar_id, table_id, total } = useLocalSearchParams();
 
-  // Lógica para volver a la pantalla principal y confirmar el pedido
+  useEffect(() => {
+    const clearOrders = async () => {
+      try {
+        // Limpiar las comandas pendientes
+        await AsyncStorage.removeItem(`pendingOrders_${bar_id}_${table_id}`);
+        // Limpiar el carrito actual
+        await AsyncStorage.removeItem(`cart_${bar_id}_${table_id}`);
+        console.log('Órdenes y carrito limpiados con éxito');
+      } catch (error) {
+        console.error('Error al limpiar órdenes y carrito:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'No se pudieron limpiar los pedidos anteriores.',
+        });
+      }
+    };
+
+    clearOrders();
+  }, [bar_id, table_id]);
+
   const handleGoHome = () => {
-    router.push(`/client/bar-details/${barId}`);
-  };
-  
-    // Aquí comentarías la integración con axios hasta que el backend esté listo
-    /*
-    axios.post('https://tu-backend.com/api/orders/confirm', {
-      paymentMethod: paymentMethod || 'Desconocido',
-      id_mesa: barId, // ID de la mesa
-      total: total, // Total del pedido
-      // Otros campos que podrían ser necesarios
-      // id_cliente: clienteId, // Si tienes autenticación en el app
-      // detalles_pedido: productos, // Si tienes los productos del pedido
-    })
-    .then(response => {
-      console.log('Pedido confirmado:', response.data);
-      // Redirigir a la pantalla de confirmación del pedido exitoso
-      router.push(`/client/bar-details/${barId}/OrderConfirmationScreen`);
-    })
-    .catch(error => {
-      console.error('Error al confirmar el pedido:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'No se pudo confirmar tu pedido. Inténtalo nuevamente.',
-      });
+    router.push({
+      pathname: `/client/bar-details/${bar_id}`,
+      params: { bar_id, table_id, clearCart: 'true' }
     });
-    */
-    
-    // Por ahora, simplemente navegas de regreso a la pantalla de inicio
-    //router.push(`/client/bar-details/index`);
-  //};
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -48,15 +43,20 @@ const OrderConfirmationScreen: React.FC = () => {
         Tu pedido ha sido confirmado y se está procesando.
       </Text>
       <Text style={styles.paymentDetails}>
-        Método de Pago: {paymentMethod ? paymentMethod : 'Desconocido'}
+        Método de Pago: {paymentMethod || 'Desconocido'}
+      </Text>
+      <Text style={styles.paymentDetails}>
+        Total Pagado: ${Number(total).toLocaleString()}
       </Text>
 
       <TouchableOpacity style={styles.homeButton} onPress={handleGoHome}>
         <Text style={styles.homeButtonText}>Volver a Inicio</Text>
       </TouchableOpacity>
+
+      <Toast />
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   paymentDetails: {
     fontSize: 16,
     color: '#2B2D42',
-    marginBottom: 40,
+    marginBottom: 10,
   },
   homeButton: {
     backgroundColor: '#28a745',
@@ -96,5 +96,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-export default OrderConfirmationScreen;

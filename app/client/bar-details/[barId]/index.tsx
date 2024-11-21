@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
-  const { bar_id, table_id, user_id } = useLocalSearchParams();
+  const { bar_id, table_id, user_id, clearCart } = useLocalSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
@@ -64,7 +64,12 @@ const BarDetailsScreen: React.FC = () => {
 
     fetchProducts();
     loadExistingOrders();
-  }, [bar_id, table_id]);
+
+    // Clear cart if necessary
+    if (clearCart === 'true') {
+      clearCartData();
+    }
+  }, [bar_id, table_id, clearCart]);
 
   const loadExistingOrders = async () => {
     try {
@@ -75,6 +80,18 @@ const BarDetailsScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Error loading existing orders:", error);
+    }
+  };
+
+  const clearCartData = async () => {
+    try {
+      await AsyncStorage.removeItem(`existingOrders_${bar_id}_${table_id}`);
+      setExistingOrders([]);
+      setQuantities({});
+      setTotal(0);
+      console.log('Carrito limpiado después del pago');
+    } catch (error) {
+      console.error('Error al limpiar el carrito:', error);
     }
   };
 
@@ -204,38 +221,36 @@ const BarDetailsScreen: React.FC = () => {
   );
 };
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    margin: 20,
-    color: '#2B2D42',
+    margin: 10,
+    textAlign: 'center',
   },
   list: {
-    paddingBottom: 100,
+    padding: 10,
   },
   productCard: {
     flexDirection: 'row',
-    padding: 10,
-    margin: 10,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: 'white',
     borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowRadius: 2,
   },
   productImage: {
     width: 80,
     height: 80,
-    borderRadius: 10,
+    borderRadius: 5,
   },
   productInfo: {
     flex: 1,
@@ -252,59 +267,59 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 5,
   },
   quantityButton: {
+    backgroundColor: '#ddd',
+    borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ddd',
-    borderRadius: 15,
   },
   quantityButtonText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   quantity: {
-    marginHorizontal: 10,
     fontSize: 18,
+    marginHorizontal: 10,
   },
   subtotalContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 5,
   },
   subtotalLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#888',
   },
   subtotalAmount: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   totalBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    padding: 15,
+    backgroundColor: 'white',
     borderTopWidth: 1,
-    borderColor: '#ddd',
+    borderTopColor: '#ddd',
   },
   totalText: {
     fontSize: 18,
     fontWeight: 'bold',
   },
   payButton: {
-    backgroundColor: '#EF233C',
+    backgroundColor: '#4CAF50',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
   },
   payButtonText: {
-    fontSize: 18,
-    color: '#fff',
+    color: 'white',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

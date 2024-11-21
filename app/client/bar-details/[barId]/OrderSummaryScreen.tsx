@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
@@ -15,6 +15,7 @@ interface Product {
 }
 
 interface Order {
+  id: string;
   products: Product[];
   orderTime: string;
   total: number;
@@ -25,15 +26,22 @@ export default function OrderSummaryScreen() {
   const { products: productsParam, table_id, bar_id, user_id, group_id, userName } = useLocalSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState<number>(0);
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof productsParam === 'string') {
       try {
         const parsedOrders = JSON.parse(productsParam);
         if (Array.isArray(parsedOrders)) {
-          setOrders(parsedOrders);
-          calculateTotal(parsedOrders);
+          const ordersWithIds = parsedOrders.map((order, index) => ({
+            ...order,
+            id: `order-${index}-${Date.now()}`,
+            products: order.products.map(product => ({
+              ...product,
+              id: product.id || `product-${Date.now()}-${Math.random()}`
+            }))
+          }));
+          setOrders(ordersWithIds);
+          calculateTotal(ordersWithIds);
         } else {
           Toast.show({
             type: 'error',
@@ -51,61 +59,74 @@ export default function OrderSummaryScreen() {
     }
   }, [productsParam]);
 
-  const calculateTotal = (orders: Order[]) => {
+  const calculateTotal = useCallback((orders: Order[]) => {
     const totalValue = orders.reduce((acc, order) => acc + order.total, 0);
     setTotal(totalValue);
-  };
+  }, []);
 
-  const handleConfirmOrder = () => {
-    Toast.show({
-      type: 'success',
-      text1: 'Pedido Confirmado',
-      text2: 'Procediendo al pago...',
-    });
+  const handleConfirmOrder = async () => {
+    try {
+      await AsyncStorage.setItem(`pendingOrders_${bar_id}_${table_id}`, JSON.stringify(orders));
+      
+      Toast.show({
+        type: 'success',
+        text1: 'Pedido Confirmado',
+        text2: 'Procediendo al pago...',
+      });
 
-    router.push({
-      pathname: `/client/bar-details/${bar_id}/PaymentMethodScreen`,
-      params: {
-        paymentMethod: selectedMethod,
-        total,
-        bar_id,
-        table_id,
-      },
-    });
+      router.push({
+        pathname: `/client/bar-details/${bar_id}/PaymentMethodScreen`,
+        params: {
+          total,
+          bar_id,
+          table_id,
+        },
+      });
+    } catch (error) {
+      console.error('Error saving pending orders:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo procesar el pedido. Por favor, inténtelo de nuevo.',
+      });
+    }
   };
 
   const handleContinueOrdering = () => {
     router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${group_id}`);
   };
 
-  const renderOrderItem = ({ item }: { item: Order }) => (
+  const renderProductItem = useCallback(({ item: product }: { item: Product }) => (
+    <View style={styles.productCard}>
+      <View style={styles.productInfo}>
+        <Text style={styles.productName}>{product.name}</Text>
+        <Text style={styles.productPrice}>${product.price.toLocaleString()}</Text>
+      </View>
+      <View style={styles.quantityContainer}>
+        <Text style={styles.quantity}>{product.quantity}</Text>
+        <Ionicons 
+          name={product.available ? "checkmark-circle" : "close-circle"} 
+          size={20} 
+          color={product.available ? "#4CAF50" : "#F44336"} 
+        />
+      </View>
+    </View>
+  ), []);
+
+  const renderOrderItem = useCallback(({ item: order }: { item: Order }) => (
     <View style={styles.orderContainer}>
       <View style={styles.orderInfo}>
-        <Text style={styles.orderInfoText}>Hora del pedido: {item.orderTime}</Text>
+        <Text style={styles.orderInfoText}>Hora del pedido: {order.orderTime}</Text>
       </View>
       <FlatList
-        data={item.products}
-        renderItem={({ item: product }) => (
-          <View style={styles.productCard}>
-            <View style={styles.productInfo}>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productPrice}>${product.price.toLocaleString()}</Text>
-            </View>
-            <View style={styles.quantityContainer}>
-              <Text style={styles.quantity}>{product.quantity}</Text>
-              <Ionicons 
-                name={product.available ? "checkmark-circle" : "close-circle"} 
-                size={20} 
-                color={product.available ? "#4CAF50" : "#F44336"} 
-              />
-            </View>
-          </View>
-        )}
-        keyExtractor={(product) => product.id}
+        data={order.products}
+        renderItem={renderProductItem}
+        keyExtractor={(product) => `${order.id}-${product.id}`}
+        extraData={order.id}
       />
-      <Text style={styles.orderTotal}>Total de la comanda: ${item.total.toLocaleString()}</Text>
+      <Text style={styles.orderTotal}>Total de la comanda: ${order.total.toLocaleString()}</Text>
     </View>
-  );
+  ), [renderProductItem]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -116,7 +137,8 @@ export default function OrderSummaryScreen() {
         <FlatList
           data={orders}
           renderItem={renderOrderItem}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(order) => order.id}
+          extraData={orders}
           contentContainerStyle={styles.listContent}
         />
       </View>

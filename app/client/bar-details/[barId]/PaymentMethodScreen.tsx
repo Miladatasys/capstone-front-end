@@ -1,39 +1,50 @@
-// PaymentMethodScreen.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
-// import axios from 'axios'; // Descomentar cuando el backend esté disponible
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const PaymentMethodScreen: React.FC = () => {
+interface SavedCard {
+  id: string;
+  lastDigits: string;
+  cardHolder: string;
+}
+
+export default function PaymentMethodScreen() {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const [savedCards, setSavedCards] = useState([
-    { id: '1', lastDigits: '1234', cardHolder: 'Juan Pérez' },
-    { id: '2', lastDigits: '5678', cardHolder: 'Ana Gómez' },
-  ]);
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const router = useRouter();
+  const { total, bar_id, table_id } = useLocalSearchParams();
 
   useEffect(() => {
-    // TODO: Integración con el backend para obtener tarjetas guardadas
-    // Aquí deberíamos realizar una solicitud GET para obtener las tarjetas guardadas del usuario desde el backend.
-    /*
-    axios.get('https://mi-backend.com/api/user/saved-cards')
-      .then(response => {
-        setSavedCards(response.data.cards);
-      })
-      .catch(error => {
-        console.error('Error al obtener las tarjetas guardadas:', error);
+    const fetchSavedCards = async () => {
+      try {
+        const savedCardsJson = await AsyncStorage.getItem('savedCards');
+        if (savedCardsJson) {
+          setSavedCards(JSON.parse(savedCardsJson));
+        } else {
+          // Mock data for demonstration
+          const mockCards = [
+            { id: '1', lastDigits: '1234', cardHolder: 'Juan Pérez' },
+            { id: '2', lastDigits: '5678', cardHolder: 'Ana Gómez' },
+          ];
+          await AsyncStorage.setItem('savedCards', JSON.stringify(mockCards));
+          setSavedCards(mockCards);
+        }
+      } catch (error) {
+        console.error('Error fetching saved cards:', error);
         Toast.show({
           type: 'error',
           text1: 'Error',
           text2: 'No se pudieron cargar las tarjetas guardadas.',
         });
-      });
-    */
+      }
+    };
+
+    fetchSavedCards();
   }, []);
 
-  // Lógica para confirmar el método de pago seleccionado
-  const handleConfirmPaymentMethod = () => {
+  const handleConfirmPaymentMethod = async () => {
     if (!selectedMethod) {
       Toast.show({
         type: 'info',
@@ -44,96 +55,95 @@ const PaymentMethodScreen: React.FC = () => {
       return;
     }
 
-    // TODO: Integración con el backend para registrar el método de pago seleccionado
-    /*
-    axios.post('https://mi-backend.com/api/orders/payment-method', { paymentMethod: selectedMethod })
-      .then(response => {
-        console.log('Método de pago registrado:', response.data);
-        // Redirigir a la pantalla de confirmación del pedido exitoso
-        router.push({
-          pathname: `/client/bar-details/[barId]/OrderConfirmationScreen`,
-          params: {
-            paymentMethod: selectedMethod,
-          },
-        });
-      })
-      .catch(error => {
-        console.error('Error al registrar el método de pago:', error);
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'No se pudo confirmar el método de pago. Inténtalo nuevamente.',
-        });
+    try {
+      // Store the selected payment method
+      await AsyncStorage.setItem(`selectedPaymentMethod_${bar_id}_${table_id}`, selectedMethod);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Método de Pago Seleccionado',
+        text2: `El método de pago seleccionado es: ${selectedMethod}`,
       });
-    */
 
-    // Mock para simular el flujo mientras se realiza la integración
-    Toast.show({
-      type: 'success',
-      text1: 'Método de Pago Seleccionado',
-      text2: `El método de pago seleccionado es: ${selectedMethod}`,
-    });
-
-    router.push({
-      pathname: `/client/bar-details/[barId]/OrderConfirmationScreen`,
-      params: {
-        paymentMethod: selectedMethod,
-      },
-    });
+      router.push({
+        pathname: `/client/bar-details/${bar_id}/OrderConfirmationScreen`,
+        params: {
+          paymentMethod: selectedMethod,
+          total,
+          bar_id,
+          table_id,
+        },
+      });
+    } catch (error) {
+      console.error('Error storing payment method:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo confirmar el método de pago. Inténtalo nuevamente.',
+      });
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Selecciona un Método de Pago</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.title}>Selecciona un Método de Pago</Text>
 
-      <Text style={styles.subTitle}>Tarjetas Guardadas</Text>
-      {savedCards.map((card) => (
+        <Text style={styles.subTitle}>Tarjetas Guardadas</Text>
+        {savedCards.map((card) => (
+          <TouchableOpacity
+            key={card.id}
+            style={[styles.paymentOption, selectedMethod === `Tarjeta ${card.lastDigits}` && styles.selectedOption]}
+            onPress={() => setSelectedMethod(`Tarjeta ${card.lastDigits}`)}
+          >
+            <Text style={styles.paymentText}>**** **** **** {card.lastDigits} - {card.cardHolder}</Text>
+          </TouchableOpacity>
+        ))}
+
+        <Text style={styles.subTitle}>Otros Métodos de Pago</Text>
         <TouchableOpacity
-          key={card.id}
-          style={[styles.paymentOption, selectedMethod === `Tarjeta ${card.lastDigits}` && styles.selectedOption]}
-          onPress={() => setSelectedMethod(`Tarjeta ${card.lastDigits}`)}
+          style={[styles.paymentOption, selectedMethod === 'Tarjeta de Crédito' && styles.selectedOption]}
+          onPress={() => setSelectedMethod('Tarjeta de Crédito')}
         >
-          <Text style={styles.paymentText}>**** **** **** {card.lastDigits} - {card.cardHolder}</Text>
+          <Text style={styles.paymentText}>Tarjeta de Crédito</Text>
         </TouchableOpacity>
-      ))}
 
-      <Text style={styles.subTitle}>Otros Métodos de Pago</Text>
-      <TouchableOpacity
-        style={[styles.paymentOption, selectedMethod === 'Tarjeta de Crédito' && styles.selectedOption]}
-        onPress={() => setSelectedMethod('Tarjeta de Crédito')}
-      >
-        <Text style={styles.paymentText}>Tarjeta de Crédito</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.paymentOption, selectedMethod === 'Tarjeta de Débito' && styles.selectedOption]}
-        onPress={() => setSelectedMethod('Tarjeta de Débito')}
-      >
-        <Text style={styles.paymentText}>Tarjeta de Débito</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.paymentOption, selectedMethod === 'Efectivo' && styles.selectedOption]}
-        onPress={() => setSelectedMethod('Efectivo')}
-      >
-        <Text style={styles.paymentText}>Efectivo</Text>
-      </TouchableOpacity>
-
-      <View style={styles.confirmContainer}>
-        <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmPaymentMethod}>
-          <Text style={styles.confirmButtonText}>Confirmar Método de Pago</Text>
+        <TouchableOpacity
+          style={[styles.paymentOption, selectedMethod === 'Tarjeta de Débito' && styles.selectedOption]}
+          onPress={() => setSelectedMethod('Tarjeta de Débito')}
+        >
+          <Text style={styles.paymentText}>Tarjeta de Débito</Text>
         </TouchableOpacity>
-      </View>
+
+        <TouchableOpacity
+          style={[styles.paymentOption, selectedMethod === 'Efectivo' && styles.selectedOption]}
+          onPress={() => setSelectedMethod('Efectivo')}
+        >
+          <Text style={styles.paymentText}>Efectivo</Text>
+        </TouchableOpacity>
+
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalText}>Total a pagar: ${Number(total).toLocaleString()}</Text>
+        </View>
+
+        <View style={styles.confirmContainer}>
+          <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmPaymentMethod}>
+            <Text style={styles.confirmButtonText}>Confirmar Método de Pago</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
       <Toast />
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9f9f9',
+  },
+  scrollContent: {
     padding: 20,
   },
   title: {
@@ -169,6 +179,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#2B2D42',
   },
+  totalContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  totalText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2B2D42',
+  },
   confirmContainer: {
     marginTop: 40,
     alignItems: 'center',
@@ -185,5 +204,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-export default PaymentMethodScreen;

@@ -119,13 +119,9 @@ const BarDetailsScreen: React.FC = () => {
       .filter((product) => quantities[product.product_id] > 0)
       .map((product) => ({
         product_id: product.product_id,
-        name: product.name,
-        price: parseFloat(product.price) || 0,
+        price: parseFloat(product.price),
         quantity: quantities[product.product_id],
-        originalQuantity: quantities[product.product_id],
-        available: product.availability,
-      }))
-      .filter(product => product.product_id && product.quantity > 0 && product.price > 0);
+      }));
 
     if (selectedProducts.length > 0) {
       const newOrder = {
@@ -157,6 +153,7 @@ const BarDetailsScreen: React.FC = () => {
       });
       setQuantities(resetQuantities);
       setTotal(0);
+
     } else {
       Toast.show({
         type: 'info',
@@ -165,6 +162,7 @@ const BarDetailsScreen: React.FC = () => {
       });
     }
   };
+
 
   return (
     <SafeAreaView style={styles.container}>

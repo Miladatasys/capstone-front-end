@@ -96,6 +96,10 @@ export default function OrderSummaryScreen() {
     router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${group_id}`);
   };
 
+  const handleCancelOrder = () => {
+    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${group_id}`);
+  };
+
   const renderProductItem = useCallback(({ item: product }: { item: Product }) => (
     <View style={styles.productCard}>
       <View style={styles.productInfo}>
@@ -132,8 +136,10 @@ export default function OrderSummaryScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.content}>
+        <Pressable style={styles.cancelButton} onPress={handleCancelOrder}>
+          <Text style={styles.cancelButtonText}>Cancelar Pedido</Text>
+        </Pressable>
         <Text style={styles.title}>Comandas</Text>
-        
         <FlatList
           data={orders}
           renderItem={renderOrderItem}
@@ -277,18 +283,32 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#FFEB3B',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+    marginTop: 10,
   },
   continueButton: {
     backgroundColor: '#0077b6',
-    marginRight: 10,
   },
   confirmButton: {
     backgroundColor: '#4CAF50',
-    marginLeft: 10,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
+  cancelButtonText: {
+    color: '#333333',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
+

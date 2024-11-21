@@ -9,25 +9,51 @@ export default function OrderConfirmationScreen() {
   const { paymentMethod, bar_id, table_id, total } = useLocalSearchParams();
 
   useEffect(() => {
-    const clearOrders = async () => {
+    const completeOrder = async () => {
       try {
-        // Limpiar las comandas pendientes
-        await AsyncStorage.removeItem(`pendingOrders_${bar_id}_${table_id}`);
-        // Limpiar el carrito actual
-        await AsyncStorage.removeItem(`cart_${bar_id}_${table_id}`);
-        console.log('Órdenes y carrito limpiados con éxito');
+        // Obtener las órdenes pendientes
+        const pendingOrdersString = await AsyncStorage.getItem(`pendingOrders_${bar_id}_${table_id}`);
+        if (pendingOrdersString) {
+          const pendingOrders = JSON.parse(pendingOrdersString);
+          
+          // Crear una nueva orden completada
+          const completedOrder = {
+            id: `order-${Date.now()}`,
+            date: new Date().toISOString(),
+            total: parseFloat(total as string),
+            status: 'Completado',
+            barId: bar_id,
+          };
+
+          // Obtener órdenes completadas existentes
+          const existingCompletedOrdersString = await AsyncStorage.getItem(`completedOrders_${bar_id}`);
+          const existingCompletedOrders = existingCompletedOrdersString 
+            ? JSON.parse(existingCompletedOrdersString) 
+            : [];
+
+          // Añadir la nueva orden completada
+          const updatedCompletedOrders = [...existingCompletedOrders, completedOrder];
+
+          // Guardar las órdenes completadas actualizadas
+          await AsyncStorage.setItem(`completedOrders_${bar_id}`, JSON.stringify(updatedCompletedOrders));
+
+          // Limpiar las órdenes pendientes
+          await AsyncStorage.removeItem(`pendingOrders_${bar_id}_${table_id}`);
+
+          console.log('Orden completada y guardada en el historial');
+        }
       } catch (error) {
-        console.error('Error al limpiar órdenes y carrito:', error);
+        console.error('Error al completar la orden:', error);
         Toast.show({
           type: 'error',
           text1: 'Error',
-          text2: 'No se pudieron limpiar los pedidos anteriores.',
+          text2: 'No se pudo completar el pedido.',
         });
       }
     };
 
-    clearOrders();
-  }, [bar_id, table_id]);
+    completeOrder();
+  }, [bar_id, table_id, total]);
 
   const handleGoHome = () => {
     router.push({

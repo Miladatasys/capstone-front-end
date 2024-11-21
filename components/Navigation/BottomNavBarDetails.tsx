@@ -1,14 +1,13 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname, useLocalSearchParams } from 'expo-router';
 
 const BottomNavBarDetails: React.FC = () => {
   const router = useRouter();
-  const pathname = usePathname(); // Obtiene la ruta actual
-  const { barId } = useLocalSearchParams(); // Para acceder al `barId` si es necesario
+  const pathname = usePathname();
+  const { barId } = useLocalSearchParams();
 
-  // Determina qué pestaña está activa según la ruta actual
   const getTabColor = (tabRoutes: string[]) => {
     return tabRoutes.some((tabRoute) => pathname.includes(tabRoute)) ? '#EF233C' : '#747272';
   };
@@ -17,28 +16,41 @@ const BottomNavBarDetails: React.FC = () => {
     return tabRoutes.some((tabRoute) => pathname.includes(tabRoute)) ? styles.selectedIconText : styles.iconText;
   };
 
+  const handleHomePress = () => {
+    Alert.alert(
+      "Salir del bar",
+      "¿Estás seguro que deseas salir del bar?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        { 
+          text: "Sí, salir", 
+          onPress: () => router.push('/client/recommendations/RecommendationsScreen')
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
-      {/* Botón de Inicio */}
-      <TouchableOpacity onPress={() => router.push('/client/recommendations/RecommendationsScreen')}>
+      <TouchableOpacity onPress={handleHomePress}>
         <View style={styles.iconContainer}>
           <Ionicons name="home-outline" size={24} color={getTabColor(['/client/recommendations'])} />
           <Text style={getTextStyle(['/client/recommendations'])}>Inicio</Text>
         </View>
       </TouchableOpacity>
 
-      {/* Botón de Escanear */}
-        <View style={styles.iconContainer}>
-          <Ionicons
-            name="book-outline"
-            size={24}
-            color={getTabColor(['/client/bar-details', '/client/orders'])}
-          />
-          <Text style={getTextStyle(['/client/bar-details', '/client/orders'])}>Carta</Text>
-        </View>
+      <View style={styles.iconContainer}>
+        <Ionicons
+          name="book-outline"
+          size={24}
+          color={getTabColor(['/client/bar-details', '/client/orders'])}
+        />
+        <Text style={getTextStyle(['/client/bar-details', '/client/orders'])}>Carta</Text>
+      </View>
 
-
-      {/* Botón de Historial de Pedidos */}
       <TouchableOpacity onPress={() => router.push(`/client/bar-details/${barId}/OrdersHistoryScreen`)}>
         <View style={styles.iconContainer}>
           <Ionicons name="time-outline" size={24} color={getTabColor([`/client/bar-details/${barId}/OrdersHistoryScreen`])} />
@@ -46,7 +58,6 @@ const BottomNavBarDetails: React.FC = () => {
         </View>
       </TouchableOpacity>
 
-      {/* Botón de Mi Cuenta */}
       <TouchableOpacity onPress={() => router.push('/client/account/AccountSettingsScreen')}>
         <View style={styles.iconContainer}>
           <Ionicons name="person-outline" size={24} color={getTabColor(['/client/account'])} />
@@ -82,3 +93,4 @@ const styles = StyleSheet.create({
 });
 
 export default BottomNavBarDetails;
+

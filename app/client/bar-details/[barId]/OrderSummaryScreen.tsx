@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, StatusBar, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
@@ -99,18 +99,43 @@ export default function OrderSummaryScreen() {
   };
 
   const handleCancelOrder = () => {
-    cleanOrders();
-    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${group_id}`);
+    Alert.alert(
+      "Cancelar Pedido",
+      "¿Estás seguro de que quieres cancelar este pedido? Se borrarán todas las comandas pendientes.",
+      [
+        {
+          text: "No",
+          style: "cancel"
+        },
+        { 
+          text: "Sí, cancelar", 
+          onPress: async () => {
+            await cleanOrders();
+            router.push({
+              pathname: `/client/bar-details/${bar_id}`,
+              params: { 
+                user_id, 
+                table_id, 
+                bar_id, 
+                group_id, 
+                clearCart: 'true' 
+              }
+            });
+          }
+        }
+      ]
+    );
   };
 
   const cleanOrders = async () => {
     try {
       await AsyncStorage.removeItem(`pendingOrders_${bar_id}_${table_id}`);
+      await AsyncStorage.removeItem(`existingOrders_${bar_id}_${table_id}`);
       setOrders([]);
       setTotal(0);
       Toast.show({
         type: 'success',
-        text1: 'Comandas limpiadas',
+        text1: 'Pedido cancelado',
         text2: 'Se han eliminado todas las comandas pendientes.',
       });
     } catch (error) {
@@ -162,7 +187,7 @@ export default function OrderSummaryScreen() {
         <Pressable style={styles.cancelButton} onPress={handleCancelOrder}>
           <Text style={styles.cancelButtonText}>Cancelar Pedido</Text>
         </Pressable>
-        <Text style={styles.title}>Comandas</Text>
+        <Text style={styles.title}>Resumen de Pedido</Text>
         <FlatList
           data={orders}
           renderItem={renderOrderItem}

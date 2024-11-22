@@ -1,29 +1,70 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import debounce from 'lodash/debounce';
 
 const UpdateProfileScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [errors, setErrors] = useState({ name: '', email: '', phoneNumber: '' });
   const router = useRouter();
 
-  // Validación de correo electrónico
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Validación del número de teléfono
   const validatePhoneNumber = (phoneNumber: string) => {
     const phoneRegex = /^[0-9]{7,15}$/;
     return phoneRegex.test(phoneNumber);
   };
 
-  // Manejar la actualización del perfil
+  const validateField = (field: string, value: string) => {
+    let error = '';
+    switch (field) {
+      case 'name':
+        if (!value.trim()) {
+          error = 'El nombre es obligatorio';
+        } else if (value.trim().length < 2) {
+          error = 'El nombre debe tener al menos 2 caracteres';
+        } else if (value.trim().length > 50) {
+          error = 'El nombre no puede exceder los 50 caracteres';
+        } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
+          error = 'El nombre solo puede contener letras y espacios';
+        }
+        break;
+      case 'email':
+        if (!value.trim()) {
+          error = 'El correo electrónico es obligatorio';
+        } else if (!validateEmail(value)) {
+          error = 'Ingresa un correo electrónico válido';
+        }
+        break;
+      case 'phoneNumber':
+        if (!value.trim()) {
+          error = 'El número de teléfono es obligatorio';
+        } else if (!validatePhoneNumber(value)) {
+          error = 'Ingresa un número de teléfono válido (8 -10 dígitos)';
+        }
+        break;
+    }
+    setErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  const debouncedValidateField = useCallback(
+    debounce((field: string, value: string) => validateField(field, value), 300),
+    []
+  );
+
   const handleUpdateProfile = () => {
-    if (!name || !email || !phoneNumber) {
+    validateField('name', name);
+    validateField('email', email);
+    validateField('phoneNumber', phoneNumber);
+
+    if (!name.trim() || !email.trim() || !phoneNumber.trim()) {
       Toast.show({
         type: 'error',
         text1: 'Campos Vacíos',
@@ -32,20 +73,11 @@ const UpdateProfileScreen: React.FC = () => {
       return;
     }
 
-    if (!validateEmail(email)) {
+    if (errors.name || errors.email || errors.phoneNumber) {
       Toast.show({
         type: 'error',
-        text1: 'Correo No Válido',
-        text2: 'Por favor ingresa un correo electrónico válido.',
-      });
-      return;
-    }
-
-    if (!validatePhoneNumber(phoneNumber)) {
-      Toast.show({
-        type: 'error',
-        text1: 'Número de Teléfono No Válido',
-        text2: 'Por favor ingresa un número de teléfono válido (de 7 a 15 dígitos).',
+        text1: 'Campos Inválidos',
+        text2: 'Por favor, corrige los errores en el formulario.',
       });
       return;
     }
@@ -57,71 +89,76 @@ const UpdateProfileScreen: React.FC = () => {
       text2: 'Tu perfil se ha actualizado correctamente.',
     });
 
-    // Redirigir al usuario a la pantalla principal después de la actualización
     setTimeout(() => {
       router.push('/client/recommendations/RecommendationsScreen');
-    }, 2000); // Se espera 2 segundos para que el Toast sea visible
-
-    // TODO: Integración con el backend para actualizar el perfil del usuario
-    /*
-    axios.post('https://mi-backend.com/api/user/update-profile', {
-      name,
-      email,
-      phoneNumber,
-    })
-      .then(response => {
-        Toast.show({
-          type: 'success',
-          text1: 'Perfil Actualizado',
-          text2: 'Tu perfil se ha actualizado correctamente.',
-        });
-        // Redirigir al inicio después de la actualización exitosa
-        setTimeout(() => {
-          router.push('/client/recommendations/RecommendationsScreen');
-        }, 2000);
-      })
-      .catch(error => {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'No se pudo actualizar el perfil. Inténtalo nuevamente.',
-        });
-      });
-    */
+    }, 2000);
   };
+
+  const InputField = ({ icon, placeholder, value, onChangeText, keyboardType, field }) => (
+    <View style={styles.inputContainer}>
+      <Ionicons name={icon} size={24} color="#8D99AE" style={styles.inputIcon} />
+      <TextInput
+        style={styles.input}
+        placeholder={placeholder}
+        value={value}
+        onChangeText={(text) => {
+          onChangeText(text);
+          debouncedValidateField(field, text);
+        }}
+        keyboardType={keyboardType}
+        accessibilityLabel={placeholder}
+      />
+      {errors[field] ? (
+        <Text style={styles.errorText}>{errors[field]}</Text>
+      ) : null}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Actualizar Perfil</Text>
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre Completo"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Correo Electrónico"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Número de Teléfono"
-          keyboardType="phone-pad"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-        />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingView}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <Text style={styles.title}>Actualizar Perfil</Text>
+          
+          <InputField
+            icon="person-outline"
+            placeholder="Nombre Completo"
+            value={name}
+            onChangeText={setName}
+            keyboardType="default"
+            field="name"
+          />
+          <InputField
+            icon="mail-outline"
+            placeholder="Correo Electrónico"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            field="email"
+          />
+          <InputField
+            icon="call-outline"
+            placeholder="Número de Teléfono"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            keyboardType="phone-pad"
+            field="phoneNumber"
+          />
 
-        <TouchableOpacity style={styles.confirmButton} onPress={handleUpdateProfile}>
-          <Text style={styles.confirmButtonText}>Actualizar Perfil</Text>
-        </TouchableOpacity>
-        
-        <Toast />
-      </ScrollView>
+          <TouchableOpacity 
+            style={styles.confirmButton} 
+            onPress={handleUpdateProfile}
+            accessibilityRole="button"
+            accessibilityLabel="Actualizar Perfil"
+          >
+            <Text style={styles.confirmButtonText}>Actualizar Perfil</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <Toast />
     </SafeAreaView>
   );
 };
@@ -129,41 +166,68 @@ const UpdateProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#FFFFFF',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   scrollContainer: {
     padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#2B2D42',
     marginBottom: 20,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputIcon: {
+    position: 'absolute',
+    top: 15,
+    left: 15,
+    zIndex: 1,
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
     padding: 15,
-    marginBottom: 15,
+    paddingLeft: 50,
+    fontSize: 16,
+    color: '#2B2D42',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  errorText: {
+    color: '#EF233C',
+    fontSize: 14,
+    marginTop: 5,
+    marginLeft: 15,
+  },
   confirmButton: {
-    backgroundColor: '#EF233C',
+    backgroundColor: '#2B2D42',
     paddingVertical: 15,
-    borderRadius: 5,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   confirmButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
   },
 });
 
 export default UpdateProfileScreen;
+

@@ -16,7 +16,6 @@ interface Order {
 const ITEMS_PER_PAGE = 10;
 
 const convertToCLP = (usdAmount: number) => {
-  // Tasa de cambio aproximada (1 USD = 800 CLP)
   const exchangeRate = 800;
   return Math.round(usdAmount * exchangeRate);
 };
@@ -43,7 +42,6 @@ const OrdersHistoryScreen: React.FC = () => {
         const allOrders = JSON.parse(ordersString);
         console.log('Parsed orders:', allOrders);
       
-        // Filter only completed orders
         const completedOrders = allOrders.filter((order: Order) => order.status.toLowerCase() === 'completado');
         setOrders(completedOrders.reverse());
       } else {
@@ -96,7 +94,7 @@ const OrdersHistoryScreen: React.FC = () => {
       },
       {
         id: '2',
-        date: new Date(Date.now() - 86400000).toISOString(), // Ayer
+        date: new Date(Date.now() - 86400000).toISOString(),
         total: 15000,
         status: 'completado',
         items: [{ name: 'Margarita', quantity: 1, price: 7000 }, { name: 'Tacos', quantity: 2, price: 4000 }]
@@ -105,7 +103,11 @@ const OrdersHistoryScreen: React.FC = () => {
   
     await AsyncStorage.setItem(`orders_${barId}`, JSON.stringify(testOrders));
     console.log('Test orders added');
-    fetchOrders(); // Vuelve a cargar los pedidos
+    fetchOrders();
+  };
+
+  const handleGoBack = () => {
+    router.back();
   };
 
   if (loading) {
@@ -118,7 +120,12 @@ const OrdersHistoryScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Historial de Pedidos</Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#2B2D42" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Historial de Pedidos</Text>
+      </View>
       {orders.length > 0 ? (
         <>
           <FlatList
@@ -164,11 +171,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     padding: 20,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  backButton: {
+    padding: 10,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#2B2D42',
-    marginBottom: 20,
+    flex: 1,
     textAlign: 'center',
   },
   list: {

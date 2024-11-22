@@ -49,8 +49,6 @@ export default function Header({
         {barName}
       </Text>
       <View style={styles.iconsContainer}>
-
-
         <TouchableOpacity 
           onPress={handleNotificationsPress} 
           style={styles.iconButton}
@@ -110,3 +108,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+

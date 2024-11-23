@@ -11,13 +11,29 @@ const BarSignInScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState('Mesero');
+  const [showRoleOptions, setShowRoleOptions] = useState(false);
+
+  const roles = ['Mesero', 'Barra', 'Cocina'];
 
   const onBarSignInPressed = () => {
     setLoading(true);
-    console.log('Inicio de sesión de bar con', email, password);
+    console.log('Inicio de sesión de bar con', email, password, 'Rol:', selectedRole);
     setTimeout(() => {
       setLoading(false);
-      router.push("/bar/notifications");
+      switch (selectedRole) {
+        case 'Mesero':
+          router.push("/waiter/WaiterHomeScreen");
+          break;
+        case 'Barra':
+          router.push("/bar/notifications");
+          break;
+        case 'Cocina':
+          router.push("/Kitchen/Notifications"); // Updated route for Cocina
+          break;
+        default:
+          console.error('Rol no reconocido');
+      }
     }, 2000); // Simulando una carga de 2 segundos
   };
 
@@ -29,12 +45,17 @@ const BarSignInScreen: React.FC = () => {
     router.push("/bar/auth/BarForgotPasswordScreen");
   };
 
-  const onWaiterAccessPressed = () => {
-    router.push("/waiter/WaiterHomeScreen");
-  };
-
   const onClientAccessPressed = () => {
     router.push("/client/auth/ClientSignInScreen");
+  };
+
+  const toggleRoleOptions = () => {
+    setShowRoleOptions(!showRoleOptions);
+  };
+
+  const selectRole = (role: string) => {
+    setSelectedRole(role);
+    setShowRoleOptions(false);
   };
 
   return (
@@ -56,6 +77,19 @@ const BarSignInScreen: React.FC = () => {
             setvalue={setPassword}
             secureTextEntry={true}
           />
+          <TouchableOpacity onPress={toggleRoleOptions} style={styles.roleSelector}>
+            <Text style={styles.roleSelectorText}>{selectedRole}</Text>
+            <Ionicons name={showRoleOptions ? "chevron-up" : "chevron-down"} size={24} color="#8D99AE" />
+          </TouchableOpacity>
+          {showRoleOptions && (
+            <View style={styles.roleOptions}>
+              {roles.map((role) => (
+                <TouchableOpacity key={role} onPress={() => selectRole(role)} style={styles.roleOption}>
+                  <Text style={styles.roleOptionText}>{role}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {loading ? (
@@ -79,11 +113,6 @@ const BarSignInScreen: React.FC = () => {
         </View>
 
         <View style={styles.alternateAccessContainer}>
-          <ClientCustomButton
-            text="Acceder como mesero"
-            onPress={onWaiterAccessPressed}
-            type="SECONDARY"
-          />
           <TouchableOpacity onPress={onClientAccessPressed} style={styles.clientButton}>
             <Ionicons name="people-outline" size={24} color="#8D99AE" />
             <Text style={styles.clientButtonText}>Iniciar como cliente</Text>
@@ -157,6 +186,36 @@ const styles = StyleSheet.create({
     color: '#8D99AE',
     fontSize: 16,
     marginLeft: 10,
+  },
+  roleSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#8D99AE',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
+  roleSelectorText: {
+    fontSize: 16,
+    color: '#2B2D42',
+  },
+  roleOptions: {
+    borderWidth: 1,
+    borderColor: '#8D99AE',
+    borderRadius: 5,
+    marginTop: -10,
+    marginBottom: 10,
+  },
+  roleOption: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#8D99AE',
+  },
+  roleOptionText: {
+    fontSize: 16,
+    color: '#2B2D42',
   },
 });
 

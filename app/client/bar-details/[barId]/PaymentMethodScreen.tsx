@@ -115,13 +115,6 @@ export default function PaymentMethodScreen() {
           <Text style={styles.paymentText}>Tarjeta de Débito</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.paymentOption, selectedMethod === 'Efectivo' && styles.selectedOption]}
-          onPress={() => setSelectedMethod('Efectivo')}
-        >
-          <Text style={styles.paymentText}>Efectivo</Text>
-        </TouchableOpacity>
-
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>Total a pagar: ${Number(total).toLocaleString()}</Text>
         </View>

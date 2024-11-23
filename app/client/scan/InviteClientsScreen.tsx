@@ -80,6 +80,7 @@ export default function InviteClientsScreen() {
           <Text style={styles.questionText}>¿Deseas invitar a más personas al pedido?</Text>
           <View style={styles.buttonContainer}>
             <CustomButton title="Invitar" onPress={handleInvite} style={styles.inviteButton} />
+            
             <CustomButton title="Continuar solo" onPress={handleContinueAlone} style={styles.continueButton} />
           </View>
         </>

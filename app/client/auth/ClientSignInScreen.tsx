@@ -1,20 +1,40 @@
-import React, { useState } from 'react';
-import { View, Image, StyleSheet, ScrollView, Text, Pressable, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Image, StyleSheet, ScrollView, Text, Pressable, ActivityIndicator, Animated, Dimensions } from 'react-native';
 import { useRouter } from "expo-router";
 import Toast from 'react-native-toast-message';
 import axios from 'axios';
+import { Ionicons } from '@expo/vector-icons';
 import Logo from '../../../assets/images/Logo_2.png';
 import ClientCustomInput from '../../../components/CustomInput/ClientCustomInput';
 import ClientCustomButton from '../../../components/CustomButton/ClientCustomButton';
 import { API_URL } from '@env';
+
+const { width } = Dimensions.get('window');
 
 const ClientSignInScreen: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(width))[0];
 
-  // Validar y proceder con la navegación a la pantalla de Recomendados
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 20,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   const onClientSignInPressed = async () => {
     if (username.trim() === '' || password.trim() === '') {
       Toast.show({
@@ -28,39 +48,26 @@ const ClientSignInScreen: React.FC = () => {
     setLoading(true);
   
     try {
-      // Realiza la solicitud al backend para autenticar al usuario
-      //console.log('Api url: ',API_URL)  
       const response = await axios.post(`${API_URL}/api/login`, {
         email: username,
         password,
       });
-      //console.log(response.data); // Log para verificar la respuesta
-      //console.log(response)
-      // Si el inicio de sesión es exitoso
-      if (response.status === 200) {
-        const user_id = response.data.user_id; // Asegúrate de que el backend devuelva user_id
-        const user_type_id = response.data.user_type_id; // También puedes extraer el tipo de usuario si es necesario
-        
-        // console.log('Inicio de sesión exitoso:', { user_id, user_type_id });
 
+      if (response.status === 200) {
+        const user_id = response.data.user_id;
+        const user_type_id = response.data.user_type_id;
+        
         Toast.show({
           type: 'success',
           text1: 'Inicio de Sesión Exitoso',
-          text2: 'Bienvenido de nuevo!',
+          text2: '¡Bienvenido de nuevo!',
         });
 
-        // Almacenar el token JWT si es necesario
         const token = response.data.token;
-        //console.log('token: ', token)
-        // Puedes almacenar el token usando AsyncStorage o algún método similar
-  
-        // Navegar a la pantalla de Recomendaciones
-        // router.push("/client/recommendations/RecommendationsScreen");
         router.push(`/client/recommendations/RecommendationsScreen?user_id=${user_id}&user_type_id=${user_type_id}`);
       }
     } catch (error) {
-      // Mostrar un Toast en caso de error con el inicio de sesión
-      console.error('Error al realizar la solicitud:', error); // Log para ver el error completo
+      console.error('Error al realizar la solicitud:', error);
       
       Toast.show({
         type: 'error',
@@ -86,23 +93,25 @@ const ClientSignInScreen: React.FC = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
-      <View style={styles.root}>
+      <Animated.View style={[styles.root, { opacity: fadeAnim, transform: [{ translateX: slideAnim }] }]}>
         <Image source={Logo} style={styles.logo} resizeMode="contain" />
 
-        <ClientCustomInput
-          placeholder="Nombre de Usuario"
-          value={username}
-          setvalue={setUsername}
-        />
-        <ClientCustomInput
-          placeholder="Contraseña"
-          value={password}
-          setvalue={setPassword}
-          secureTextEntry={true}
-        />
+        <View style={styles.inputContainer}>
+          <ClientCustomInput
+            placeholder="Nombre de Usuario"
+            value={username}
+            setvalue={setUsername}
+          />
+          <ClientCustomInput
+            placeholder="Contraseña"
+            value={password}
+            setvalue={setPassword}
+            secureTextEntry={true}
+          />
+        </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
+          <ActivityIndicator size="large" color="#EF233C" style={styles.loader} />
         ) : (
           <ClientCustomButton
             text="Iniciar Sesión"
@@ -110,20 +119,22 @@ const ClientSignInScreen: React.FC = () => {
           />
         )}
 
-        <ClientCustomButton
-          text="Olvidé mi Contraseña"
-          onPress={onClientForgotPasswordPressed}
-          type="TERTIARY"
-        />
+        <View style={styles.linkContainer}>
+          <Pressable onPress={onClientForgotPasswordPressed}>
+            <Text style={styles.linkText}>¿Olvidaste tu contraseña?</Text>
+          </Pressable>
+        </View>
 
-        <ClientCustomButton
-          text="Registrarse"
-          onPress={onClientSignUpPressed}
-          type="SECONDARY"
-        />
-      </View>
+        <View style={styles.signUpContainer}>
+          <Text style={styles.signUpText}>¿No tienes una cuenta?</Text>
+          <Pressable onPress={onClientSignUpPressed}>
+            <Text style={styles.signUpButtonText}>Regístrate</Text>
+          </Pressable>
+        </View>
+      </Animated.View>
 
       <Pressable onPress={onBarSignInPressed} style={styles.barSignInButton}>
+        <Ionicons name="business-outline" size={24} color="#8D99AE" />
         <Text style={styles.barSignInText}>Iniciar como Bar</Text>
       </Pressable>
 
@@ -135,30 +146,64 @@ const ClientSignInScreen: React.FC = () => {
 const styles = StyleSheet.create({
   scrollView: {
     flexGrow: 1,
-    justifyContent: 'center',
-    paddingBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
   },
   root: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
   },
   logo: {
-    width: '60%',
-    maxWidth: 250,
-    maxHeight: 180,
-    marginBottom: 30,
+    width: '70%',
+    height: 120,
+    marginBottom: 40,
   },
-  barSignInButton: {
-    alignSelf: 'center',
+  inputContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  linkContainer: {
+    width: '100%',
+    alignItems: 'flex-end',
+    marginBottom: 20,
+  },
+  linkText: {
+    color: '#2B2D42',
+    fontSize: 14,
+  },
+  signUpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 20,
   },
+  signUpText: {
+    color: '#8D99AE',
+    fontSize: 16,
+  },
+  signUpButtonText: {
+    color: '#EF233C',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 5,
+  },
+  barSignInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+    marginBottom: 20,
+  },
   barSignInText: {
-    color: '#888',
-    fontSize: 17,
-    textDecorationLine: 'underline',
+    color: '#8D99AE',
+    fontSize: 16,
+    marginLeft: 10,
   },
 });
 
 export default ClientSignInScreen;
+

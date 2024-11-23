@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
@@ -98,35 +98,6 @@ export default function OrderSummaryScreen() {
     router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${group_id}`);
   };
 
-  const handleCancelOrder = () => {
-    Alert.alert(
-      "Cancelar Pedido",
-      "¿Estás seguro de que quieres cancelar este pedido? Se borrarán todas las comandas pendientes.",
-      [
-        {
-          text: "No",
-          style: "cancel"
-        },
-        { 
-          text: "Sí, cancelar", 
-          onPress: async () => {
-            await cleanOrders();
-            router.push({
-              pathname: `/client/bar-details/${bar_id}`,
-              params: { 
-                user_id, 
-                table_id, 
-                bar_id, 
-                group_id, 
-                clearCart: 'true' 
-              }
-            });
-          }
-        }
-      ]
-    );
-  };
-
   const cleanOrders = async () => {
     try {
       await AsyncStorage.removeItem(`pendingOrders_${bar_id}_${table_id}`);
@@ -135,7 +106,7 @@ export default function OrderSummaryScreen() {
       setTotal(0);
       Toast.show({
         type: 'success',
-        text1: 'Pedido cancelado',
+        text1: 'Pedido limpio',
         text2: 'Se han eliminado todas las comandas pendientes.',
       });
     } catch (error) {
@@ -184,9 +155,6 @@ export default function OrderSummaryScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.content}>
-        <Pressable style={styles.cancelButton} onPress={handleCancelOrder}>
-          <Text style={styles.cancelButtonText}>Cancelar Pedido</Text>
-        </Pressable>
         <Text style={styles.title}>Resumen de Pedido</Text>
         <FlatList
           data={orders}
@@ -333,15 +301,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginHorizontal: 5,
   },
-  cancelButton: {
-    backgroundColor: '#FFEB3B',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginBottom: 10,
-    marginTop: 10,
-  },
   continueButton: {
     backgroundColor: '#0077b6',
   },
@@ -353,10 +312,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  cancelButtonText: {
-    color: '#333333',
-    fontSize: 14,
-    fontWeight: '600',
-  },
 });
-

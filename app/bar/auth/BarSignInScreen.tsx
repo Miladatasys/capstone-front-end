@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Image, StyleSheet, ScrollView, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Logo from '../../../assets/images/Logo_2.png';
+import ClientCustomInput from '../../../components/CustomInput/ClientCustomInput';
+import ClientCustomButton from '../../../components/CustomButton/ClientCustomButton';
 
 const BarSignInScreen: React.FC = () => {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const onBarSignInPressed = () => {
+    setLoading(true);
     console.log('Inicio de sesión de bar con', email, password);
-    router.push("/bar/notifications"); 
+    setTimeout(() => {
+      setLoading(false);
+      router.push("/bar/notifications");
+    }, 2000); // Simulando una carga de 2 segundos
   };
 
   const onBarSignUpPressed = () => {
@@ -21,133 +30,135 @@ const BarSignInScreen: React.FC = () => {
   };
 
   const onWaiterAccessPressed = () => {
-    // Acceso directo para el mesero sin login
     router.push("/waiter/WaiterHomeScreen");
   };
 
   const onClientAccessPressed = () => {
-    // Navegar a la pantalla de inicio de sesión del cliente
     router.push("/client/auth/ClientSignInScreen");
   };
 
   return (
-    <View style={styles.container}>
-      {/* Añadir el logo */}
-      <Image source={require('../../../assets/images/Logo_2.png')} style={styles.logo} />
-      
-      <Text style={styles.title}>Iniciar sesión en Bar</Text>
-      
-      <TextInput
-        placeholder="Correo electrónico"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-      />
-      
-      <TextInput
-        placeholder="Contraseña"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-      />
-      
-      <TouchableOpacity style={styles.button} onPress={onBarSignInPressed}>
-        <Text style={styles.buttonText}>Iniciar sesión</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity onPress={onBarSignUpPressed}>
-        <Text style={styles.linkText}>¿No tienes una cuenta? Regístrate</Text>
-      </TouchableOpacity>
+    <ScrollView contentContainerStyle={styles.scrollView}>
+      <View style={styles.container}>
+        <Image source={Logo} style={styles.logo} resizeMode="contain" />
 
-      <TouchableOpacity onPress={onBarForgotPasswordPressed}>
-        <Text style={styles.linkText}>¿Olvidaste tu contraseña?</Text>
-      </TouchableOpacity>
+        <Text style={styles.title}>Iniciar sesión en Bar</Text>
 
-      {/* Opción minimalista para el mesero */}
-      <TouchableOpacity onPress={onWaiterAccessPressed} style={styles.waiterButton}>
-        <Text style={styles.waiterButtonText}>Acceder como mesero</Text>
-      </TouchableOpacity>
+        <View style={styles.inputContainer}>
+          <ClientCustomInput
+            placeholder="Correo electrónico"
+            value={email}
+            setvalue={setEmail}
+          />
+          <ClientCustomInput
+            placeholder="Contraseña"
+            value={password}
+            setvalue={setPassword}
+            secureTextEntry={true}
+          />
+        </View>
 
-      {/* Opción minimalista y elegante para el cliente */}
-      <TouchableOpacity onPress={onClientAccessPressed} style={styles.clientButton}>
-        <Text style={styles.clientButtonText}>Iniciar como cliente</Text>
-      </TouchableOpacity>
-    </View>
+        {loading ? (
+          <ActivityIndicator size="large" color="#EF233C" style={styles.loader} />
+        ) : (
+          <ClientCustomButton
+            text="Iniciar Sesión"
+            onPress={onBarSignInPressed}
+          />
+        )}
+
+        <TouchableOpacity onPress={onBarForgotPasswordPressed}>
+          <Text style={styles.linkText}>¿Olvidaste tu contraseña?</Text>
+        </TouchableOpacity>
+
+        <View style={styles.signUpContainer}>
+          <Text style={styles.signUpText}>¿No tienes una cuenta?</Text>
+          <TouchableOpacity onPress={onBarSignUpPressed}>
+            <Text style={styles.signUpButtonText}>Regístrate</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.alternateAccessContainer}>
+          <ClientCustomButton
+            text="Acceder como mesero"
+            onPress={onWaiterAccessPressed}
+            type="SECONDARY"
+          />
+          <TouchableOpacity onPress={onClientAccessPressed} style={styles.clientButton}>
+            <Ionicons name="people-outline" size={24} color="#8D99AE" />
+            <Text style={styles.clientButtonText}>Iniciar como cliente</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  scrollView: {
+    flexGrow: 1,
     backgroundColor: '#ffffff',
   },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
   logo: {
-    width: 150, 
-    height: 150, 
-    marginBottom: 30, 
+    width: '70%',
+    height: 100,
+    marginBottom: 30,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#2B2D42',
     marginBottom: 20,
   },
-  input: {
+  inputContainer: {
     width: '100%',
-    padding: 15,
-    marginBottom: 15,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 10,
-    backgroundColor: '#fff',
+    marginBottom: 20,
   },
-  button: {
-    backgroundColor: '#EF233C',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-    width: '100%',
-  },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
+  loader: {
+    marginVertical: 20,
   },
   linkText: {
     color: '#0077b6',
-    marginTop: 10,
-    fontSize: 16,
+    marginTop: 15,
+    fontSize: 14,
   },
-  waiterButton: {
+  signUpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 20,
-    padding: 10,
-    backgroundColor: '#0096c7',
-    borderRadius: 10,
-    width: '60%',
   },
-  waiterButtonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontSize: 16,
+  signUpText: {
+    color: '#8D99AE',
+    fontSize: 14,
+  },
+  signUpButtonText: {
+    color: '#EF233C',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 5,
+  },
+  alternateAccessContainer: {
+    width: '100%',
+    marginTop: 30,
   },
   clientButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#2B2D42',
-    borderRadius: 10,
-    width: '60%',
   },
   clientButtonText: {
-    color: '#2B2D42',
-    textAlign: 'center',
+    color: '#8D99AE',
     fontSize: 16,
+    marginLeft: 10,
   },
 });
 
 export default BarSignInScreen;
+

@@ -12,6 +12,10 @@ const UpdateProfileScreen: React.FC = () => {
   const [errors, setErrors] = useState({ name: '', email: '', phoneNumber: '' });
   const router = useRouter();
 
+  const handleGoBack = () => {
+    router.push('/client/account/AccountSettingsScreen');
+  };
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -116,6 +120,9 @@ const UpdateProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="#2B2D42" />
+      </TouchableOpacity>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
@@ -226,6 +233,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 1,
   },
 });
 

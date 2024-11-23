@@ -39,18 +39,6 @@ const OrdersHistoryScreen: React.FC = () => {
       const response = await axios.get(`${API_URL}/api/history/${barId}`);
       console.log('Orders from backend:', response.data.orders);
   
-<<<<<<< Updated upstream
-      if (ordersString) {
-        const allOrders = JSON.parse(ordersString);
-        console.log('Parsed orders:', allOrders);
-      
-        const completedOrders = allOrders.filter((order: Order) => order.status.toLowerCase() === 'completado');
-        setOrders(completedOrders.reverse());
-      } else {
-        console.log('No orders found for this bar');
-        setOrders([]);
-      }
-=======
       // Mapear los datos para que coincidan con la interfaz Order
       const mappedOrders = response.data.orders.map((order: any) => ({
         id: order.ordertotal_id.toString(),
@@ -65,7 +53,6 @@ const OrdersHistoryScreen: React.FC = () => {
       }));
   
       setOrders(mappedOrders.reverse());
->>>>>>> Stashed changes
     } catch (error) {
       console.error('Error al obtener los pedidos del backend:', error);
       Toast.show({

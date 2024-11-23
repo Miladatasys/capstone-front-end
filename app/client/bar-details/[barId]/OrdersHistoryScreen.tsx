@@ -4,6 +4,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { API_URL } from '@env';
 
 interface Order {
   id: string;
@@ -34,10 +36,10 @@ const OrdersHistoryScreen: React.FC = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const ordersString = await AsyncStorage.getItem(`orders_${barId}`);
-      console.log(`Fetching orders for bar ${barId}`);
-      console.log('Raw orders data:', ordersString);
+      const response = await axios.get(`${API_URL}/api/history/${barId}`);
+      console.log('Orders from backend:', response.data.orders);
   
+<<<<<<< Updated upstream
       if (ordersString) {
         const allOrders = JSON.parse(ordersString);
         console.log('Parsed orders:', allOrders);
@@ -48,17 +50,34 @@ const OrdersHistoryScreen: React.FC = () => {
         console.log('No orders found for this bar');
         setOrders([]);
       }
+=======
+      // Mapear los datos para que coincidan con la interfaz Order
+      const mappedOrders = response.data.orders.map((order: any) => ({
+        id: order.ordertotal_id.toString(),
+        date: order.creation_date,
+        total: parseFloat(order.total),
+        status: order.status,
+        items: order.products.map((product: any) => ({
+          name: product.product_name,
+          quantity: product.quantity,
+          price: parseFloat(product.unit_price),
+        })),
+      }));
+  
+      setOrders(mappedOrders.reverse());
+>>>>>>> Stashed changes
     } catch (error) {
-      console.error('Error al obtener los pedidos del bar:', error);
+      console.error('Error al obtener los pedidos del backend:', error);
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'No se pudieron cargar los pedidos del bar.',
+        text2: 'No se pudieron cargar los pedidos del backend.',
       });
     } finally {
       setLoading(false);
     }
   };
+  
 
   const renderOrderItem = ({ item }: { item: Order }) => (
     <View style={styles.orderCard}>

@@ -118,6 +118,7 @@ const BarDetailsScreen: React.FC = () => {
     const selectedProducts = products
       .filter((product) => quantities[product.product_id] > 0)
       .map((product) => ({
+        name: product.name,
         product_id: product.product_id,
         price: parseFloat(product.price),
         quantity: quantities[product.product_id],

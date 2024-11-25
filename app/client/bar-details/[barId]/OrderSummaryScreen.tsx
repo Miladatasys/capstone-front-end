@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
-import { Ionicons } from '@expo/vector-icons';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Product {
@@ -127,11 +127,6 @@ export default function OrderSummaryScreen() {
       </View>
       <View style={styles.quantityContainer}>
         <Text style={styles.quantity}>{product.quantity}</Text>
-        <Ionicons 
-          name={product.available ? "checkmark-circle" : "close-circle"} 
-          size={20} 
-          color={product.available ? "#4CAF50" : "#F44336"} 
-        />
       </View>
     </View>
   ), []);

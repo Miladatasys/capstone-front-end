@@ -115,46 +115,76 @@ const BarDetailsScreen: React.FC = () => {
   };
 
   const handleRequestOrder = async () => {
+    // Filtrar y mapear los productos seleccionados
     const selectedProducts = products
       .filter((product) => quantities[product.product_id] > 0)
       .map((product) => ({
-        name: product.name,
         product_id: product.product_id,
-        price: parseFloat(product.price),
-        quantity: quantities[product.product_id],
+        name: product.name,
+        price: parseFloat(product.price), // Precio del producto
+        quantity: quantities[product.product_id], // Cantidad seleccionada
+        category: product.category, // Categoría del producto
       }));
 
     if (selectedProducts.length > 0) {
+      
       const newOrder = {
         products: selectedProducts,
-        orderTime: new Date().toLocaleString(),
-        total: total
+        user_id, // Asegurarse de que sea un número
+        table_id,
+        bar_id,
+        special_notes: "", // Opcional
+        orderGroup_id: null
       };
 
-      const updatedExistingOrders = [...existingOrders, newOrder];
-      setExistingOrders(updatedExistingOrders);
+      console.log('Datos enviados:', newOrder);
+      console.log('Endpoint llamado:', `${API_URL}/api/orders`);
 
       try {
-        await AsyncStorage.setItem(`existingOrders_${bar_id}_${table_id}`, JSON.stringify(updatedExistingOrders));
+        // Enviar datos al backend
+        const response = await axios.post(`${API_URL}/api/orders`, newOrder);
+        console.log('Orden creada exitosamente:', response.data);
+
+        // Guardar la orden localmente
+        const updatedExistingOrders = [
+          ...existingOrders,
+          { ...newOrder, orderTime: new Date().toLocaleString() },
+        ];
+        setExistingOrders(updatedExistingOrders);
+
+        await AsyncStorage.setItem(
+          `existingOrders_${bar_id}_${table_id}`,
+          JSON.stringify(updatedExistingOrders)
+        );
+
+        // Redirigir a la pantalla de resumen del pedido
+        const productsString = JSON.stringify(updatedExistingOrders);
+        router.push({
+          pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
+          params: { products: productsString, table_id, bar_id, user_id },
+        });
+
+        // Resetear cantidades y total
+        const resetQuantities = {};
+        products.forEach((product) => {
+          resetQuantities[product.product_id] = 0;
+        });
+        setQuantities(resetQuantities);
+        setTotal(0);
+
+        Toast.show({
+          type: 'success',
+          text1: 'Pedido realizado',
+          text2: 'Tu pedido ha sido enviado exitosamente.',
+        });
       } catch (error) {
-        console.error("Error saving existing orders:", error);
+        console.error('Error al crear el pedido:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error al realizar pedido',
+          text2: 'No se pudo enviar tu pedido. Intenta nuevamente.',
+        });
       }
-
-      const productsString = JSON.stringify(updatedExistingOrders);
-
-      router.push({
-        pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
-        params: { products: productsString, table_id, bar_id, user_id },
-      });
-
-      // Reset quantities after adding to order
-      const resetQuantities = {};
-      products.forEach((product) => {
-        resetQuantities[product.product_id] = 0;
-      });
-      setQuantities(resetQuantities);
-      setTotal(0);
-
     } else {
       Toast.show({
         type: 'info',
@@ -163,6 +193,7 @@ const BarDetailsScreen: React.FC = () => {
       });
     }
   };
+
 
 
   return (

@@ -31,33 +31,54 @@ export default function OrderSummaryScreen() {
     if (typeof productsParam === 'string') {
       try {
         const parsedOrders = JSON.parse(productsParam);
-        if (Array.isArray(parsedOrders)) {
-          const ordersWithIds = parsedOrders.map((order, index) => ({
-            ...order,
-            id: `order-${index}-${Date.now()}`,
-            products: order.products.map(product => ({
-              ...product,
-              id: product.id || `product-${Date.now()}-${Math.random()}`
-            }))
-          }));
-          setOrders(ordersWithIds);
-          calculateTotal(ordersWithIds);
-        } else {
-          Toast.show({
-            type: 'error',
-            text1: 'Error',
-            text2: 'El formato de los productos no es válido.',
-          });
-        }
+
+        const normalizedOrders = parsedOrders.map((order) => {
+          if (order.newOrder) {
+            const normalizedProducts = order.newOrder.products.map((prod, index) => ({
+              ...prod,
+              id: `${prod.product_id}-${Date.now()}-${index}`, // Generar un ID único
+            }));
+            console.log('Productos normalizados (newOrder):', normalizedProducts);
+
+            return {
+              id: `order-${Date.now()}-${Math.random()}`,
+              products: normalizedProducts,
+              orderTime: order.orderTime || '',
+              total: normalizedProducts.reduce((acc, prod) => acc + prod.price * prod.quantity, 0),
+            };
+          } else if (order.products) {
+            const normalizedProducts = order.products.map((prod, index) => ({
+              ...prod,
+              id: `${prod.product_id}-${Date.now()}-${index}`, // Generar un ID único
+            }));
+            console.log('Productos normalizados (products):', normalizedProducts);
+
+            return {
+              id: `order-${Date.now()}-${Math.random()}`,
+              products: normalizedProducts,
+              orderTime: order.orderTime || '',
+              total: normalizedProducts.reduce((acc, prod) => acc + prod.price * prod.quantity, 0),
+            };
+          }
+          return null;
+        }).filter(order => order !== null);
+
+        console.log('Ordenes normalizadas:', normalizedOrders);
+        setOrders(normalizedOrders);
+        calculateTotal(normalizedOrders);
       } catch (error) {
+        console.error('Error al procesar productsParam:', error);
         Toast.show({
           type: 'error',
           text1: 'Error',
-          text2: `No se pudieron cargar los productos correctamente. ${error.message}`,
+          text2: 'Los datos de los pedidos no se pudieron procesar.',
         });
       }
     }
   }, [productsParam]);
+
+
+
 
   const calculateTotal = useCallback((orders: Order[]) => {
     const totalValue = orders.reduce((acc, order) => acc + order.total, 0);
@@ -67,7 +88,7 @@ export default function OrderSummaryScreen() {
   const handleConfirmOrder = async () => {
     try {
       await AsyncStorage.setItem(`pendingOrders_${bar_id}_${table_id}`, JSON.stringify(orders));
-    
+
       Toast.show({
         type: 'success',
         text1: 'Pedido Confirmado',
@@ -131,6 +152,7 @@ export default function OrderSummaryScreen() {
     </View>
   ), []);
 
+
   const renderOrderItem = useCallback(({ item: order }: { item: Order }) => (
     <View style={styles.orderContainer}>
       <View style={styles.orderInfo}>
@@ -139,12 +161,13 @@ export default function OrderSummaryScreen() {
       <FlatList
         data={order.products}
         renderItem={renderProductItem}
-        keyExtractor={(product) => `${order.id}-${product.id}`}
+        keyExtractor={(product, index) => `${order.id}-${product.name}-${index}`} // Clave única generada
         extraData={order.id}
       />
       <Text style={styles.orderTotal}>Total de la comanda: ${order.total.toLocaleString()}</Text>
     </View>
   ), [renderProductItem]);
+
 
   return (
     <SafeAreaView style={styles.container}>

@@ -1,0 +1,260 @@
+[
+  {
+    "type": "directory",
+    "name": "bar",
+    "children": [
+      {
+        "type": "directory",
+        "name": "auth",
+        "children": [
+          {
+            "type": "file",
+            "name": "BarConfirmEmailScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "BarForgotPasswordScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "BarNewPasswordScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "BarSignInScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "BarSignUpScreen.tsx"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "notifications",
+        "children": [
+          {
+            "type": "file",
+            "name": "index.tsx"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "orders",
+        "children": [
+          {
+            "type": "file",
+            "name": "OrderDetail.tsx"
+          },
+          {
+            "type": "file",
+            "name": "Orders.tsx"
+          },
+          {
+            "type": "file",
+            "name": "ProductUnavailable.tsx"
+          },
+          {
+            "type": "file",
+            "name": "[id].tsx"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "directory",
+    "name": "barAdmin",
+    "children": [
+      {
+        "type": "directory",
+        "name": "mainScreen",
+        "children": [
+          {
+            "type": "file",
+            "name": "index.tsx"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "directory",
+    "name": "client",
+    "children": [
+      {
+        "type": "directory",
+        "name": "account",
+        "children": [
+          {
+            "type": "file",
+            "name": "AccountSettingsScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "ChangePasswordScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "UpdateProfileScreen.tsx"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "auth",
+        "children": [
+          {
+            "type": "file",
+            "name": "ClientConfirmEmailScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "ClientForgotPasswordScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "ClientNewPasswordScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "ClientSignInScreen.tsx"
+          },
+          {
+            "type": "file",
+            "name": "ClientSignUpScreen.tsx"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "bar-details",
+        "children": [
+          {
+            "type": "directory",
+            "name": "[barId]",
+            "children": [
+              {
+                "type": "file",
+                "name": "ClientNotification.tsx"
+              },
+              {
+                "type": "file",
+                "name": "index.tsx"
+              },
+              {
+                "type": "file",
+                "name": "manage-item.tsx"
+              },
+              {
+                "type": "file",
+                "name": "OrderConfirmationScreen.tsx"
+              },
+              {
+                "type": "file",
+                "name": "OrderDetailScreen.tsx"
+              },
+              {
+                "type": "file",
+                "name": "OrdersHistoryScreen.tsx"
+              },
+              {
+                "type": "file",
+                "name": "OrderSummaryScreen.tsx"
+              },
+              {
+                "type": "file",
+                "name": "PaymentMethodScreen.tsx"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "_layout.tsx"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "recommendations",
+        "children": [
+          {
+            "type": "file",
+            "name": "RecommendationsScreen.tsx"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "scan",
+        "children": [
+          {
+            "type": "file",
+            "name": "index.tsx"
+          },
+          {
+            "type": "file",
+            "name": "InviteClientsScreen.tsx"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "file",
+    "name": "index.tsx"
+  },
+  {
+    "type": "directory",
+    "name": "Kitchen",
+    "children": [
+      {
+        "type": "directory",
+        "name": "Notifications",
+        "children": [
+          {
+            "type": "file",
+            "name": "index.tsx"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "Orders",
+        "children": [
+          {
+            "type": "file",
+            "name": "KitchenOrders.tsx"
+          },
+          {
+            "type": "file",
+            "name": "[id].tsx"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "directory",
+    "name": "waiter",
+    "children": [
+      {
+        "type": "file",
+        "name": "WaiterHomeScreen.tsx"
+      },
+      {
+        "type": "file",
+        "name": "WaiterOrdersScreen.tsx"
+      },
+      {
+        "type": "file",
+        "name": "WaiterTablesScreen.tsx"
+      }
+    ]
+  },
+  {
+    "type": "file",
+    "name": "_layout.tsx"
+  }
+]

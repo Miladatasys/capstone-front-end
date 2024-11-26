@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Table {
   id: string;
@@ -43,27 +44,47 @@ const WaiterTablesScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Gestión de Mesas</Text>
-      <FlatList
-        data={tables}
-        renderItem={renderTableItem}
-        keyExtractor={(item) => item.id}
-      />
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Gestión de Mesas</Text>
+      </View>
+      <View style={styles.container}>
+        <FlatList
+          data={tables}
+          renderItem={renderTableItem}
+          keyExtractor={(item) => item.id}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#2B2D42',
+  },
+  backButton: {
+    marginRight: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
   container: {
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
   },
   tableItem: {
     backgroundColor: '#F5F5F5',
@@ -98,3 +119,4 @@ const styles = StyleSheet.create({
 });
 
 export default WaiterTablesScreen;
+

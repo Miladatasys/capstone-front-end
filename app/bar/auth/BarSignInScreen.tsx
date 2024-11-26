@@ -14,7 +14,7 @@ const BarSignInScreen: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState('Mesero');
   const [showRoleOptions, setShowRoleOptions] = useState(false);
 
-  const roles = ['Mesero', 'Barra', 'Cocina'];
+  const roles = ['Mesero', 'Barra', 'Cocina', 'Administrador'];
 
   const onBarSignInPressed = () => {
     setLoading(true);
@@ -29,12 +29,15 @@ const BarSignInScreen: React.FC = () => {
           router.push("/bar/notifications");
           break;
         case 'Cocina':
-          router.push("/Kitchen/Notifications"); // Updated route for Cocina
+          router.push("/Kitchen/Notifications");
+          break;
+        case 'Administrador':
+          router.push("/barAdmin/mainScreen");          
           break;
         default:
           console.error('Rol no reconocido');
       }
-    }, 2000); // Simulando una carga de 2 segundos
+    }, 2000);
   };
 
   const onBarSignUpPressed = () => {

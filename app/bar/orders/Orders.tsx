@@ -5,12 +5,13 @@ import BarBottomBar from '../../../components/Bar/BottomBar/BarBottomBar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+
 interface Order {
   id: string;
   table: string;
   items: string;
   total: number;
-  status: 'Rechazado' | 'Aceptado' | 'Cancelado por cliente';
+  status: 'Rechazado' | 'Aceptado';
   timestamp: string;
 }
 
@@ -21,7 +22,6 @@ const Orders: React.FC = () => {
   const ordersData: Order[] = [
     { id: '1', table: 'Mesa 1', items: 'Cerveza, Pisco Sour', total: 12000, status: 'Aceptado', timestamp: '2023-05-20T14:30:00Z' },
     { id: '2', table: 'Mesa 2', items: 'Vodka, Papas Fritas', total: 8000, status: 'Aceptado', timestamp: '2023-05-20T15:15:00Z' },
-    { id: '3', table: 'Mesa 3', items: 'Pizza', total: 15000, status: 'Cancelado por cliente', timestamp: '2023-05-20T16:00:00Z' },
     { id: '4', table: 'Mesa 4', items: 'Cerveza', total: 4000, status: 'Rechazado', timestamp: '2023-05-20T16:45:00Z' },
   ];
 
@@ -54,8 +54,6 @@ const Orders: React.FC = () => {
     switch (status) {
       case 'Aceptado':
         return '#4CAF50';
-      case 'Cancelado por cliente':
-        return '#EF233C';
       case 'Rechazado':
         return '#FF6347';
       default:
@@ -81,14 +79,12 @@ const Orders: React.FC = () => {
   const [routes] = useState([
     { key: 'all', title: 'Todos' },
     { key: 'accepted', title: 'Aceptado' },
-    { key: 'cancelled', title: 'Cancelado' },
     { key: 'rejected', title: 'Rechazado' },
   ]);
 
   const renderScene = SceneMap({
     all: renderOrders('Todos'),
     accepted: renderOrders('Aceptado'),
-    cancelled: renderOrders('Cancelado por cliente'),
     rejected: renderOrders('Rechazado'),
   });
 

@@ -64,14 +64,14 @@ export default function KitchenOrderDetail() {
   };
 
   const handleFinishCooking = () => {
-    Alert.alert('Confirmación', '¿Marcar este pedido como listo?', [
+    Alert.alert('Confirmación', '¿Confirmar?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Aceptar',
         onPress: () => {
           Toast.show({
             type: 'success',
-            text1: 'Pedido listo',
+            text1: 'Pedido Confirmado',
             text2: 'El pedido ha sido marcado como listo para servir.',
           });
           router.push('/Kitchen/Orders/KitchenOrders');
@@ -143,7 +143,7 @@ export default function KitchenOrderDetail() {
           <Text style={styles.buttonText}>Rechazar Pedido</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.finishButton} onPress={handleFinishCooking}>
-          <Text style={styles.buttonText}>Marcar como Listo</Text>
+          <Text style={styles.buttonText}>Confirmar Pedido</Text>
         </TouchableOpacity>
       </View>
       <Toast />

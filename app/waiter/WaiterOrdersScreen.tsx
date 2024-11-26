@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions, SafeAreaView } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Order {
   id: string;
@@ -134,39 +135,57 @@ const WaiterOrdersScreen: React.FC = () => {
   });
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Pedidos del Mesero</Text>
-
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndex}
-        initialLayout={{ width: Dimensions.get('window').width }}
-        renderTabBar={props => (
-          <TabBar
-            {...props}
-            scrollEnabled={true}
-            indicatorStyle={{ backgroundColor: '#EF233C' }}
-            style={styles.tabBar}
-            labelStyle={styles.tabLabel}
-          />
-        )}
-      />
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Pedidos del Mesero</Text>
+      </View>
+      <View style={styles.container}>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={{ width: Dimensions.get('window').width }}
+          renderTabBar={props => (
+            <TabBar
+              {...props}
+              scrollEnabled={true}
+              indicatorStyle={{ backgroundColor: '#EF233C' }}
+              style={styles.tabBar}
+              labelStyle={styles.tabLabel}
+            />
+          )}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#2B2D42',
+  },
+  backButton: {
+    marginRight: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
     padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#000',
   },
   orderItem: {
     backgroundColor: '#F5F5F5',
@@ -222,3 +241,4 @@ const styles = StyleSheet.create({
 });
 
 export default WaiterOrdersScreen;
+

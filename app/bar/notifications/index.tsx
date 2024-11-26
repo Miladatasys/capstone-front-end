@@ -5,11 +5,11 @@ import { useRouter } from 'expo-router';
 import BarBottomBar from '../../../components/Bar/BottomBar/BarBottomBar'; 
 
 interface Notification {
-  id: string;
-  tableNumber: string; // Número de mesa
-  items: string; // Productos
-  total: number; // Total del pedido
-  action: string; // Acción del cliente (sustituir o eliminar)
+  id: string; 
+  tableNumber: string; 
+  items: string; 
+  total: number; 
+  action: string; 
 }
 
 const NotificationsScreen: React.FC = () => {

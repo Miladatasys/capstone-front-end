@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
+import io from 'socket.io-client';  // Importa socket.io-client
 import BarBottomBar from '../../../components/Bar/BottomBar/BarBottomBar'; 
 
 interface Notification {
@@ -12,30 +13,32 @@ interface Notification {
   action: string; 
 }
 
+const API_URL = 'http://localhost:3000'; 
+const socket = io(API_URL);
+
 const NotificationsScreen: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    // Simulación de notificaciones con más detalles mientras no esté disponible el backend
-    setNotifications([
-      { id: '1', tableNumber: '3', items: 'Cerveza Artesanal, Mojito', total: 7000, action: 'eliminar' },
-      { id: '2', tableNumber: '5', items: 'Pizza Margherita', total: 8500, action: 'sustituir' }
-    ]);
+    // Conectar con el servidor y escuchar el evento 'new_order'
+    socket.on('new_order', (newOrder: Notification) => {
+      console.log('Nuevo pedido recibido:', newOrder);
+      // Añadir el nuevo pedido a la lista de notificaciones
+      setNotifications((prevNotifications) => [...prevNotifications, newOrder]);
+      
+      // Mostrar un toast para indicar que se ha recibido una nueva notificación
+      Toast.show({
+        type: 'success',
+        text1: 'Nuevo pedido',
+        text2: `Mesa ${newOrder.tableNumber}: ${newOrder.items} - Total: $${newOrder.total}`,
+      });
+    });
 
-    // Aquí irá la integración con el backend
-    /*
-    const fetchNotifications = async () => {
-      try {
-        const response = await axios.get('URL_DEL_BACKEND/api/notifications');
-        setNotifications(response.data);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      }
+    // Limpiar la conexión cuando el componente se desmonte
+    return () => {
+      socket.off('new_order'); // Detener la escucha del evento al desmontarse
     };
-
-    fetchNotifications();
-    */
   }, []);
 
   const handleNotificationPress = (notificationId: string) => {

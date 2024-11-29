@@ -7,6 +7,9 @@ import axios from 'axios';
 import { API_URL } from '@env';
 import ClientHeader from '../../../../components/ClientHeader/ClientHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import io from 'socket.io-client';  // Importar socket.io-client
+
+const socket = io(API_URL);  // Conectar al servidor Socket.IO
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
@@ -127,7 +130,6 @@ const BarDetailsScreen: React.FC = () => {
       }));
 
     if (selectedProducts.length > 0) {
-      
       const newOrder = {
         products: selectedProducts,
         user_id, // Asegurarse de que sea un número
@@ -144,6 +146,13 @@ const BarDetailsScreen: React.FC = () => {
         // Enviar datos al backend
         const response = await axios.post(`${API_URL}/api/orders`, newOrder);
         console.log('Orden creada exitosamente:', response.data);
+
+        // Emitir el evento para notificar a la barra (o cocina)
+        socket.emit('new_order', {
+          tableNumber: table_id,
+          items: selectedProducts.map((product) => product.name).join(', '),
+          total: total,
+        });
 
         // Guardar la orden localmente
         const updatedExistingOrders = [
@@ -193,8 +202,6 @@ const BarDetailsScreen: React.FC = () => {
       });
     }
   };
-
-
 
   return (
     <SafeAreaView style={styles.container}>

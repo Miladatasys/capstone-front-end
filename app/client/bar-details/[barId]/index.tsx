@@ -7,7 +7,7 @@ import axios from 'axios';
 import { API_URL } from '@env';
 import ClientHeader from '../../../../components/ClientHeader/ClientHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import io from 'socket.io-client';  // Importar socket.io-client
+import io from 'socket.io-client';  
 
 const socket = io(API_URL);  // Conectar al servidor Socket.IO
 
@@ -68,7 +68,6 @@ const BarDetailsScreen: React.FC = () => {
     fetchProducts();
     loadExistingOrders();
 
-    // Clear cart if necessary
     if (clearCart === 'true') {
       clearCartData();
     }

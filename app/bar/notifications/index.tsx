@@ -54,7 +54,7 @@ const NotificationsScreen: React.FC = () => {
       text2: `La notificación ${notificationId} ha sido gestionada.`,
     });
 
-    // Redirigir a la vista del pedido específico usando el ID de la notificación
+    // Redirigir a la vista del pedido específico usando el ID de la notificación.
     setTimeout(() => {
       router.push(`/bar/orders/${notificationId}`);  // Aquí se pasa el ID de la notificación
     }, 1000);

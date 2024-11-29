@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
-import io from 'socket.io-client';  // Importa socket.io-client
-import BarBottomBar from '../../../components/Bar/BottomBar/BarBottomBar'; 
+import BarBottomBar from '../../../components/Bar/BottomBar/BarBottomBar';
+import io from 'socket.io-client';  // Importar socket.io-client
+import { API_URL } from '@env';
+
+const socket = io(API_URL);  // Conectar al servidor Socket.IO
 
 interface Notification {
   id: string; 
@@ -13,31 +16,34 @@ interface Notification {
   action: string; 
 }
 
-const API_URL = 'http://localhost:3000'; 
-const socket = io(API_URL);
-
 const NotificationsScreen: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    // Conectar con el servidor y escuchar el evento 'new_order'
-    socket.on('new_order', (newOrder: Notification) => {
+    // Conexión con el servidor de Socket.IO
+    socket.on('new_order', (newOrder: any) => {
       console.log('Nuevo pedido recibido:', newOrder);
-      // Añadir el nuevo pedido a la lista de notificaciones
-      setNotifications((prevNotifications) => [...prevNotifications, newOrder]);
-      
-      // Mostrar un toast para indicar que se ha recibido una nueva notificación
+      setNotifications((prevNotifications) => [
+        ...prevNotifications,
+        {
+          id: newOrder.tableNumber + new Date().getTime(),
+          tableNumber: newOrder.tableNumber,
+          items: newOrder.items,
+          total: newOrder.total,
+          action: newOrder.action
+        }
+      ]);
       Toast.show({
         type: 'success',
         text1: 'Nuevo pedido',
-        text2: `Mesa ${newOrder.tableNumber}: ${newOrder.items} - Total: $${newOrder.total}`,
+        text2: `Mesa ${newOrder.tableNumber}: ${newOrder.items}`,
       });
     });
 
     // Limpiar la conexión cuando el componente se desmonte
     return () => {
-      socket.off('new_order'); // Detener la escucha del evento al desmontarse
+      socket.off('new_order');  // Detener la escucha de eventos cuando el componente se desmonte
     };
   }, []);
 
@@ -48,11 +54,12 @@ const NotificationsScreen: React.FC = () => {
       text2: `La notificación ${notificationId} ha sido gestionada.`,
     });
 
-    // Redirigir a la vista del pedido específico
+    // Redirigir a la vista del pedido específico usando el ID de la notificación
     setTimeout(() => {
-      router.push(`/bar/orders/${notificationId}`); // Redirige a la vista del pedido usando el ID de la notificación
+      router.push(`/bar/orders/${notificationId}`);  // Aquí se pasa el ID de la notificación
     }, 1000);
   };
+
 
   const renderNotificationItem = ({ item }: { item: Notification }) => (
     <TouchableOpacity onPress={() => handleNotificationPress(item.id)}>

@@ -1,6 +1,4 @@
-# Creating a README.md file based on the provided frontend structure and details.
 
-readme_content_frontend = """
 # FrontBarlink
 
 Este es el repositorio del frontend para el proyecto Barlink, desarrollado utilizando Expo (React Native). La aplicación permite a los usuarios interactuar con bares y restaurantes, facilitando el flujo de pedidos, notificaciones, pagos y gestión de grupos, entre otras funciones.
@@ -76,27 +74,27 @@ Este es el repositorio del frontend para el proyecto Barlink, desarrollado utili
 ## Requisitos Previos
 1. Node.js (v16 o superior)
 2. Expo CLI
-3. Tener configurado el backend del proyecto [https://github.com/Miladatasys/app-bar-backend]
-(https://github.com/Miladatasys/capstone-front-end)
+3. Tener configurado el backend del proyecto [Repositorio Backend](https://github.com/snowcaz/ProyectoBarlink)
 
 ## Instalación
-1. Clona este repositorio: https://github.com/Miladatasys/capstone-front-end.git
-
+1. Clona este repositorio:
+   ```
+   git clone https://github.com/snowcaz/FrontBarlink.git
+   ```
 2. Instala las dependencias:
-npm install
-
+   ```
+   npm install
+   ```
 3. Ejecuta el proyecto:
-npx expo start -c
-
+   ```
+   npx expo start -c
+   ```
 
 ## Autor
-- **Miladatasys** ([Repositorio GitHub](https://github.com/Miladatasys/capstone-front-end))
+- **snowcaz** ([Repositorio GitHub](https://github.com/snowcaz/FrontBarlink))
 
 ## Contribuciones
 Si deseas contribuir, realiza un fork de este repositorio, realiza tus cambios y envía un pull request.
 
 ## Licencia
 Este proyecto está bajo la licencia MIT.
-"""
-
-

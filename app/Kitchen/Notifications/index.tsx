@@ -3,6 +3,10 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import KitchenBottomBar from '../../../components/Kitchen/BottomBar/KitchenBottomBar';
+import io from 'socket.io-client';  // Importar socket.io-client
+import { API_URL } from '@env';
+
+const socket = io(API_URL);  // Conectar al servidor Socket.IO
 
 interface Notification {
   id: string;
@@ -17,25 +21,30 @@ const KitchenNotificationsScreen: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Simulación de notificaciones para la cocina
-    setNotifications([
-      { id: '1', tableNumber: '3', items: 'Pizza Margherita, Ensalada César', total: 15500, action: 'nuevo pedido' },
-      { id: '2', tableNumber: '5', items: 'Pasta Carbonara, Sopa del día', total: 12000, action: 'modificación' }
-    ]);
+    // Conexión con el servidor de Socket.IO para recibir las notificaciones en cocina
+    socket.on('new_order', (newOrder: any) => {
+      console.log('Nuevo pedido recibido:', newOrder);
+      setNotifications((prevNotifications) => [
+        ...prevNotifications,
+        {
+          id: newOrder.tableNumber + new Date().getTime(),
+          tableNumber: newOrder.tableNumber,
+          items: newOrder.items,
+          total: newOrder.total,
+          action: newOrder.action
+        }
+      ]);
+      Toast.show({
+        type: 'success',
+        text1: 'Nuevo pedido',
+        text2: `Mesa ${newOrder.tableNumber}: ${newOrder.items}`,
+      });
+    });
 
-    // Aquí irá la integración con el backend
-    /*
-    const fetchNotifications = async () => {
-      try {
-        const response = await axios.get('URL_DEL_BACKEND/api/kitchen/notifications');
-        setNotifications(response.data);
-      } catch (error) {
-        console.error('Error fetching kitchen notifications:', error);
-      }
+    // Limpiar la conexión cuando el componente se desmonte
+    return () => {
+      socket.off('new_order');  // Detener la escucha de eventos cuando el componente se desmonte
     };
-
-    fetchNotifications();
-    */
   }, []);
 
   const handleNotificationPress = (notificationId: string) => {
@@ -45,8 +54,9 @@ const KitchenNotificationsScreen: React.FC = () => {
       text2: `La notificación ${notificationId} ha sido gestionada.`,
     });
 
+    // Redirigir a la vista del pedido específico usando el ID de la notificación.
     setTimeout(() => {
-      router.push(`/Kitchen/Orders/${notificationId}`);
+      router.push(`/Kitchen/Orders/${notificationId}`);  // Aquí se pasa el ID de la notificación
     }, 1000);
   };
 
@@ -60,7 +70,7 @@ const KitchenNotificationsScreen: React.FC = () => {
           Items: {item.items}
         </Text>
         <Text style={styles.notificationText}>
-          Acción: {item.action}
+          Total: ${item.total ? item.total.toLocaleString() : '0'}
         </Text>
       </View>
     </TouchableOpacity>
@@ -112,4 +122,3 @@ const styles = StyleSheet.create({
 });
 
 export default KitchenNotificationsScreen;
-

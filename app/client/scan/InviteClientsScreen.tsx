@@ -12,7 +12,7 @@ export default function InviteClientsScreen() {
   const [groupId, setGroupId] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { bar_id, table_id, user_id } = useLocalSearchParams();
+  const { bar_id, table_id, user_id, orderTotal_id } = useLocalSearchParams();
 
   console.log('Log en la vista InviteClientsScreen');
   // console.log('Initial params:', { bar_id, table_id, user_id });
@@ -54,12 +54,12 @@ export default function InviteClientsScreen() {
 
   const handleContinueAlone = () => {
     console.log('Continuando hacia el menú...');
-    router.push(`/client/bar-details/${bar_id}?&user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}`);
+    router.push(`/client/bar-details/${bar_id}?&user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&orderTotal_id=${orderTotal_id}`);
   };
 
   const handleGoToMenu = () => {
     console.log('Ir al menú después de crear el grupo.');
-    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${groupId}`);
+    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${groupId}&orderTotal_id=${orderTotal_id}`);
   };
 
   const handleRescan = () => {
@@ -89,7 +89,7 @@ export default function InviteClientsScreen() {
           <Text style={styles.qrText}>Escanea este código QR para unirte al pedido:</Text>
           <View style={styles.qrCodeWrapper}>
             <QRCode
-              value={`{"bar_id": "${bar_id}", "table_id": "${table_id}", "user_id": "${user_id}", "group_id": "${groupId}"}`}
+              value={`{"bar_id": "${bar_id}", "table_id": "${table_id}", "user_id": "${user_id}", "group_id": "${groupId}", "orderTotal_id": "${orderTotal_id}"}`}
               size={200}
             />
           </View>

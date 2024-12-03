@@ -44,72 +44,81 @@ export default function ClientScanScreen() {
     console.log('Datos escaneados correctamente..');
 
     try {
-      const parsedData = JSON.parse(data);
-      const { bar_id, table_id, group_id } = parsedData;
+        const parsedData = JSON.parse(data);
+        const { bar_id, table_id, group_id, orderTotal_id: exOrderTotal_id } = parsedData;
 
-      console.log("ParseData: ", parsedData)
-      if (!bar_id || !table_id) {
-        throw new Error('Código QR inválido, falta bar_id o table_id');
-      }
-      console.log("ParseData2: ", parsedData)
-      console.log('Datos procesados:', { user_id, bar_id, table_id, group_id });
+        console.log("ParseData: ", parsedData);
+        if (!bar_id || !table_id) {
+            throw new Error('Código QR inválido, falta bar_id o table_id');
+        }
 
-      // Combine los datos obtenidos de useLocalSearchParams() y parsedData
-      const combinedData = {
-        bar_id,
-        table_id,
-        user_id, // Agregar el user_id desde useLocalSearchParams()
-        group_id
-      };
-      console.log('combinedData', combinedData)
+        let orderTotal_id = exOrderTotal_id;
 
+        // Crear una nueva sesión de pedido si no existe
+        if (!orderTotal_id) {
+            try {
+                const createOrderResponse = await axios.post(`${API_URL}/api/orders/create-session`, {
+                    user_id,
+                    bar_id,
+                    table_id
+                });
+                orderTotal_id = createOrderResponse.data.orderTotal_id;
+                console.log('Sesión creada:', orderTotal_id);
+            } catch (error) {
+                console.error('Error al crear la sesión de pedido:', error.response?.data || error.message);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error al crear sesión',
+                    text2: error.response?.data?.message || 'Inténtalo de nuevo.',
+                });
+                setScanned(false);
+                return;
+            }
+        }
 
-      // Si tiene group_id, es un QR de grupo
+        // Si tiene group_id, es un QR de grupo
+        if (group_id != undefined) {
+            console.log('QR de grupo detectado');
+            try {
+                const response = await axios.post(`${API_URL}/api/group/${group_id}/join`, {
+                    user_id,
+                });
+                console.log('Usuario unido al grupo exitosamente:', response.data);
 
-      // if (group_id ) {
-      if (group_id != undefined) {
-        console.log('QR de grupo detectado');
-        try {
-          const response = await axios.post(`${API_URL}/api/group/${group_id}/join`, {
-              user_id,
-          });
-          console.log('Usuario unido al grupo exitosamente:', response.data);
+                Toast.show({
+                    type: 'success',
+                    text1: 'Unión exitosa',
+                    text2: 'Te has unido al grupo correctamente.',
+                });
 
-          Toast.show({
-              type: 'success',
-              text1: 'Unión exitosa',
-              text2: 'Te has unido al grupo correctamente.',
-          });
-
-          // Redirigir a la vista del grupo
-          router.push(`/client/bar-details/${bar_id}?bar_id=${bar_id}&table_id=${table_id}&user_id=${user_id}&group_id=${group_id}`);
-      } catch (error) {
-          console.error('Error al unirse al grupo:', error.response?.data || error.message);
-          Toast.show({
-              type: 'error',
-              text1: 'Error al unirse al grupo',
-              text2: error.response?.data?.message || 'Inténtalo de nuevo.',
-          });
-          setScanned(false);
-      }
-      } else {
-        //Aquí manejamos el flujo normal si no es un QR de grupo
-        console.log('QR de mesa');
-        console.log('Datos procesados bar_id:', bar_id, 'table_id:', table_id, 'user_id: ', user_id);
-        router.push(`/client/scan/InviteClientsScreen?bar_id=${combinedData.bar_id}&table_id=${combinedData.table_id}&user_id=${combinedData.user_id}`);
-
-      }
+                // Redirigir a la vista del grupo
+                router.push(`/client/bar-details/${bar_id}?bar_id=${bar_id}&table_id=${table_id}&user_id=${user_id}&group_id=${group_id}&orderTotal_id=${orderTotal_id}`);
+            } catch (error) {
+                console.error('Error al unirse al grupo:', error.response?.data || error.message);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error al unirse al grupo',
+                    text2: error.response?.data?.message || 'Inténtalo de nuevo.',
+                });
+                setScanned(false);
+            }
+        } else {
+            // Aquí manejamos el flujo normal si no es un QR de grupo
+            console.log('QR de mesa');
+            console.log('Datos procesados bar_id:', bar_id, 'table_id:', table_id, 'user_id: ', user_id);
+            router.push(`/client/scan/InviteClientsScreen?bar_id=${bar_id}&table_id=${table_id}&user_id=${user_id}&orderTotal_id=${orderTotal_id}`);
+        }
 
     } catch (error) {
-      console.error('Error al procesar el código QR:', error.message);
-      Toast.show({
-        type: 'error',
-        text1: 'Error al escanear QR',
-        text2: 'Código QR no válido o incompleto. Inténtalo de nuevo.',
-      });
-      setScanned(false); // Permitir volver a escanear
+        console.error('Error al procesar el código QR:', error.message);
+        Toast.show({
+            type: 'error',
+            text1: 'Error al escanear QR',
+            text2: 'Código QR no válido o incompleto. Inténtalo de nuevo.',
+        });
+        setScanned(false); // Permitir volver a escanear
     }
-  };
+};
 
   function toggleCameraFacing() {
     setFacing(current => (current === 'back' ? 'front' : 'back'));

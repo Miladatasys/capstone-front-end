@@ -171,6 +171,7 @@ const BarDetailsScreen: React.FC = () => {
           pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
           params: { products: productsString, table_id, bar_id, user_id },
         });
+        
 
         // Resetear cantidades y total
         const resetQuantities = {};

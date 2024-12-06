@@ -21,31 +21,38 @@ const KitchenNotificationsScreen: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Conexión con el servidor de Socket.IO para recibir las notificaciones en cocina
-    socket.on('new_order', (newOrder: any) => {
-      console.log('Nuevo pedido recibido:', newOrder);
-      setNotifications((prevNotifications) => [
-        ...prevNotifications,
-        {
-          id: newOrder.tableNumber + new Date().getTime(),
-          tableNumber: newOrder.tableNumber,
-          items: newOrder.items,
-          total: newOrder.total,
-          action: newOrder.action
-        }
-      ]);
+    socket.on('new_order_kitchen', (newOrder: any) => {
+      console.log('Nuevo pedido para la cocina recibido:', newOrder);
+  
+      // Verificar si la notificación ya está presente
+      setNotifications((prevNotifications) => {
+        const exists = prevNotifications.some(notification => notification.id === newOrder.tableNumber + new Date().getTime());
+        if (exists) return prevNotifications; // Evitar duplicados
+  
+        return [
+          ...prevNotifications,
+          {
+            id: newOrder.tableNumber + new Date().getTime(),
+            tableNumber: newOrder.tableNumber,
+            items: newOrder.items,
+            total: newOrder.total,
+            action: 'kitchen'
+          }
+        ];
+      });
+  
       Toast.show({
         type: 'success',
-        text1: 'Nuevo pedido',
+        text1: 'Nuevo pedido para cocina',
         text2: `Mesa ${newOrder.tableNumber}: ${newOrder.items}`,
       });
     });
-
-    // Limpiar la conexión cuando el componente se desmonte
+  
     return () => {
-      socket.off('new_order');  // Detener la escucha de eventos cuando el componente se desmonte
+      socket.off('new_order_kitchen');
     };
   }, []);
+  
 
   const handleNotificationPress = (notificationId: string) => {
     Toast.show({

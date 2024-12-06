@@ -146,12 +146,26 @@ const BarDetailsScreen: React.FC = () => {
         const response = await axios.post(`${API_URL}/api/orders`, newOrder);
         console.log('Orden creada exitosamente:', response.data);
 
-        // Emitir el evento para notificar a la barra (o cocina)
-        socket.emit('new_order', {
-          tableNumber: table_id,
-          items: selectedProducts.map((product) => product.name).join(', '),
-          total: total,
-        });
+    // Emitir notificación para la barra
+    const drinks = selectedProducts.filter(product => product.category === 'Drink');
+    if (drinks.length > 0) {
+      socket.emit('new_order_bar', {
+        tableNumber: table_id,
+        items: drinks.map(product => product.name),
+        total: total,
+      });
+    }
+
+    // Emitir notificación para la cocina
+    const foods = selectedProducts.filter(product => product.category === 'Food');
+    if (foods.length > 0) {
+      socket.emit('new_order_kitchen', {
+        tableNumber: table_id,
+        items: foods.map(product => product.name),
+        total: total,
+      });
+    }
+
 
         // Guardar la orden localmente
         const updatedExistingOrders = [

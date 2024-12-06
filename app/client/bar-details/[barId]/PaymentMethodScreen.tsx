@@ -15,7 +15,18 @@ export default function PaymentMethodScreen() {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const router = useRouter();
-  const { total, bar_id, table_id } = useLocalSearchParams();
+  const { total, bar_id, table_id, creator_user_id, user_id } = useLocalSearchParams();
+
+  useEffect(() => {
+    if (creator_user_id !== user_id) {
+      Toast.show({
+        type: 'error',
+        text1: 'Acceso Denegado',
+        text2: 'Solo el creador del pedido puede seleccionar el método de pago.',
+      });
+      router.back();
+    }
+  }, [creator_user_id, user_id]);
 
   useEffect(() => {
     const fetchSavedCards = async () => {

@@ -51,7 +51,7 @@ const RecommendationsScreen: React.FC = () => {
     const fetchBarData = async () => {
       try {
         const response = await axios.get(`${API_URL}/api/bars`);
-        console.log("Datos de bares recibidos:", response.data);
+        // console.log("Datos de bares recibidos:", response.data);
         const barsWithImages = response.data.map((bar: any, index: number) => ({
           ...bar,
           image: barImages[index % barImages.length],

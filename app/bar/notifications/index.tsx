@@ -9,11 +9,11 @@ import { API_URL } from '@env';
 const socket = io(API_URL);  // Conectar al servidor Socket.IO
 
 interface Notification {
-  id: string; 
-  tableNumber: string; 
-  items: string; 
-  total: number; 
-  action: string; 
+  id: string;
+  tableNumber: string;
+  items: string;
+  total: number;
+  action: string;
 }
 
 const NotificationsScreen: React.FC = () => {
@@ -21,9 +21,9 @@ const NotificationsScreen: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Conexión con el servidor de Socket.IO
-    socket.on('new_order', (newOrder: any) => {
-      console.log('Nuevo pedido recibido:', newOrder);
+    // Conexión con el servidor de Socket.IO para recibir las notificaciones en la barra
+    socket.on('new_order_bar', (newOrder: any) => {
+      console.log('Nuevo pedido para la barra recibido:', newOrder);
       setNotifications((prevNotifications) => [
         ...prevNotifications,
         {
@@ -31,19 +31,19 @@ const NotificationsScreen: React.FC = () => {
           tableNumber: newOrder.tableNumber,
           items: newOrder.items,
           total: newOrder.total,
-          action: newOrder.action
+          action: 'bar' // Asegúrate de que la acción sea "bar" para la barra
         }
       ]);
       Toast.show({
         type: 'success',
-        text1: 'Nuevo pedido',
+        text1: 'Nuevo pedido para barra',
         text2: `Mesa ${newOrder.tableNumber}: ${newOrder.items}`,
       });
     });
 
     // Limpiar la conexión cuando el componente se desmonte
     return () => {
-      socket.off('new_order');  // Detener la escucha de eventos cuando el componente se desmonte
+      socket.off('new_order_bar');  // Detener la escucha de eventos cuando el componente se desmonte
     };
   }, []);
 
@@ -59,7 +59,6 @@ const NotificationsScreen: React.FC = () => {
       router.push(`/bar/orders/${notificationId}`);  // Aquí se pasa el ID de la notificación
     }, 1000);
   };
-
 
   const renderNotificationItem = ({ item }: { item: Notification }) => (
     <TouchableOpacity onPress={() => handleNotificationPress(item.id)}>

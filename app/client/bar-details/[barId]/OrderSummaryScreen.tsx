@@ -87,6 +87,9 @@ export default function OrderSummaryScreen() {
 
   const handleConfirmOrder = async () => {
     try {
+      console.log('Confirming order with orders:', orders);
+      console.log('Total:', total);
+
       await AsyncStorage.setItem(`pendingOrders_${bar_id}_${table_id}`, JSON.stringify(orders));
 
       Toast.show({
@@ -97,10 +100,20 @@ export default function OrderSummaryScreen() {
 
       await cleanOrders();
 
+      console.log('Navigating to PaymentMethodScreen with params:', {
+        total,
+        user_id,
+        bar_id,
+        table_id,
+        creator_user_id: user_id,
+        orderTotal_id,
+      });
+
       router.push({
         pathname: `/client/bar-details/${bar_id}/PaymentMethodScreen`,
         params: {
           total,
+          user_id,
           bar_id,
           table_id,
           creator_user_id: user_id,

@@ -4,7 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-
+import axios from 'axios';
+import { API_URL } from '@env';
 interface SavedCard {
   id: string;
   lastDigits: string;
@@ -15,7 +16,7 @@ export default function PaymentMethodScreen() {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const router = useRouter();
-  const { total, bar_id, table_id, creator_user_id, user_id } = useLocalSearchParams();
+  const { total, bar_id, table_id, creator_user_id, user_id, orderTotal_id } = useLocalSearchParams();
 
   useEffect(() => {
     if (creator_user_id !== user_id) {
@@ -26,7 +27,7 @@ export default function PaymentMethodScreen() {
       });
       router.back();
     }
-  }, [creator_user_id, user_id]);
+  }, [total, bar_id, table_id, creator_user_id, orderTotal_id]);
 
   useEffect(() => {
     const fetchSavedCards = async () => {
@@ -68,14 +69,22 @@ export default function PaymentMethodScreen() {
     }
 
     try {
-      // Store the selected payment method
-      await AsyncStorage.setItem(`selectedPaymentMethod_${bar_id}_${table_id}`, selectedMethod);
+      const response = await axios.post(`${API_URL}/api/payments/${orderTotal_id}/pay`, {
+        user_id,
+        payment_method: selectedMethod,
+        amounts: [total], // Assuming a single payment for the total amount
+      });
+
+      const { paymentIds, orderTotal_id: returnedOrderTotalId } = response.data;
 
       Toast.show({
         type: 'success',
-        text1: 'Método de Pago Seleccionado',
-        text2: `El método de pago seleccionado es: ${selectedMethod}`,
+        text1: 'Pago Exitoso',
+        text2: `El pago ha sido registrado. Estado del pedido: ${response.data.orderStatus}`,
       });
+
+      console.log('Payment IDs:', paymentIds);
+      console.log('Order Total ID:', returnedOrderTotalId);
 
       router.push({
         pathname: `/client/bar-details/${bar_id}/OrderConfirmationScreen`,
@@ -84,10 +93,12 @@ export default function PaymentMethodScreen() {
           total,
           bar_id,
           table_id,
+          paymentIds,
+          orderTotal_id: returnedOrderTotalId
         },
       });
     } catch (error) {
-      console.error('Error storing payment method:', error);
+      console.error('Error processing payment:', error);
       Toast.show({
         type: 'error',
         text1: 'Error',

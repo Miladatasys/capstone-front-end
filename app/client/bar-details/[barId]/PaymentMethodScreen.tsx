@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { API_URL } from '@env';
+
 interface SavedCard {
   id: string;
   lastDigits: string;
@@ -27,7 +28,7 @@ export default function PaymentMethodScreen() {
       });
       router.back();
     }
-  }, [total, bar_id, table_id, creator_user_id, orderTotal_id]);
+  }, [total, bar_id, table_id, creator_user_id, orderTotal_id, user_id]); // Añadí `user_id` a las dependencias
 
   useEffect(() => {
     const fetchSavedCards = async () => {
@@ -58,7 +59,6 @@ export default function PaymentMethodScreen() {
   }, []);
 
   const handleConfirmPaymentMethod = async () => {
-    console.log('Confirming payment method');
     if (!selectedMethod) {
       Toast.show({
         type: 'info',
@@ -77,12 +77,7 @@ export default function PaymentMethodScreen() {
         amounts: [total], // Assuming a single payment for the total amount
       });
 
-      console.log('Payment response:', response.data);
-
       const { paymentId, orderStatus } = response.data;
-
-      console.log('Payment ID:', paymentId);
-      console.log('Order Total ID:', orderTotal_id);
 
       Toast.show({
         type: 'success',
@@ -242,4 +237,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

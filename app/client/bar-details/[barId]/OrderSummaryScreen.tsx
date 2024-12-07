@@ -24,10 +24,10 @@ interface Order {
 
 export default function OrderSummaryScreen() {
   const router = useRouter();
-  const { table_id, bar_id, user_id, group_id, userName, orderTotal_id } = useLocalSearchParams();
+  const { table_id, bar_id, user_id, group_id, userName, orderTotal_id, creator_user_id } = useLocalSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState<number>(0);
-  const [isGroupCreator, setIsGroupCreator] = useState<boolean>(false);
+  const [isGroupCreator, setIsGroupCreator] = useState<boolean>(false); // Estado para verificar si el usuario es el creador del grupo
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -44,9 +44,8 @@ export default function OrderSummaryScreen() {
         const normalizedOrders = parsedOrders.map((order) => {
           const normalizedProducts = order.products.map((prod, index) => ({
             ...prod,
-            id: `${prod.id}-${Date.now()}-${index}`, // Generate a unique ID
+            id: `${prod.id}-${Date.now()}-${index}`, // Generar una ID única
           }));
-          console.log('Normalized products:', normalizedProducts);
 
           return {
             id: `order-${Date.now()}-${Math.random()}`,
@@ -56,16 +55,16 @@ export default function OrderSummaryScreen() {
           };
         });
 
-        console.log('Normalized orders:', normalizedOrders);
         setOrders(normalizedOrders);
         calculateTotal(normalizedOrders);
 
+        // Verificar si el usuario es el creador del grupo
         if (group_id) {
           const groupResponse = await axios.get(`${API_URL}/api/group/${group_id}`);
           const groupData = groupResponse.data;
-          setIsGroupCreator(groupData.creator_user_id === user_id);
+          setIsGroupCreator(groupData.creator_user_id === user_id); // Verifica si el usuario es el creador
         } else {
-          setIsGroupCreator(true);
+          setIsGroupCreator(true); // Si no hay grupo, asumir que el usuario es el creador
         }
       } catch (error) {
         console.error('Error fetching order details:', error);
@@ -87,9 +86,6 @@ export default function OrderSummaryScreen() {
 
   const handleConfirmOrder = async () => {
     try {
-      console.log('Confirming order with orders:', orders);
-      console.log('Total:', total);
-
       await AsyncStorage.setItem(`pendingOrders_${bar_id}_${table_id}`, JSON.stringify(orders));
 
       Toast.show({
@@ -99,15 +95,6 @@ export default function OrderSummaryScreen() {
       });
 
       await cleanOrders();
-
-      console.log('Navigating to PaymentMethodScreen with params:', {
-        total,
-        user_id,
-        bar_id,
-        table_id,
-        creator_user_id: user_id,
-        orderTotal_id,
-      });
 
       router.push({
         pathname: `/client/bar-details/${bar_id}/PaymentMethodScreen`,
@@ -167,7 +154,6 @@ export default function OrderSummaryScreen() {
     </View>
   ), []);
 
-
   const renderOrderItem = useCallback(({ item: order }: { item: Order }) => (
     <View style={styles.orderContainer}>
       <View style={styles.orderInfo}>
@@ -176,13 +162,12 @@ export default function OrderSummaryScreen() {
       <FlatList
         data={order.products}
         renderItem={renderProductItem}
-        keyExtractor={(product, index) => `${order.id}-${product.name}-${index}`} // Clave única generada
+        keyExtractor={(product, index) => `${order.id}-${product.name}-${index}`} 
         extraData={order.id}
       />
       <Text style={styles.orderTotal}>Total de la comanda: ${order.total.toLocaleString()}</Text>
     </View>
   ), [renderProductItem]);
-
 
   return (
     <SafeAreaView style={styles.container}>
@@ -207,9 +192,11 @@ export default function OrderSummaryScreen() {
           <Pressable style={[styles.button, styles.continueButton]} onPress={handleContinueOrdering}>
             <Text style={styles.buttonText}>Seguir pidiendo</Text>
           </Pressable>
-          <Pressable style={[styles.button, styles.confirmButton]} onPress={handleConfirmOrder}>
-            <Text style={styles.buttonText}>Pagar</Text>
-          </Pressable>
+          {isGroupCreator && (
+            <Pressable style={[styles.button, styles.confirmButton]} onPress={handleConfirmOrder}>
+              <Text style={styles.buttonText}>Pagar</Text>
+            </Pressable>
+          )}
         </View>
       </View>
 

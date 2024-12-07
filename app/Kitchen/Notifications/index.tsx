@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, Button } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import KitchenBottomBar from '../../../components/Kitchen/BottomBar/KitchenBottomBar';
@@ -14,29 +14,36 @@ interface Notification {
   items: string;
   total: number;
   action: string;
+  isConfirmed: boolean;  // Para manejar si está confirmado
+  isRejected: boolean;   // Para manejar si está rechazado
 }
 
 const KitchenNotificationsScreen: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     socket.on('new_order_kitchen', (newOrder: any) => {
       console.log('Nuevo pedido para la cocina recibido:', newOrder);
   
-      // Verificar si la notificación ya está presente
+      const notificationId = `${newOrder.tableNumber}_${newOrder.orderId}`;
+  
       setNotifications((prevNotifications) => {
-        const exists = prevNotifications.some(notification => notification.id === newOrder.tableNumber + new Date().getTime());
+        const exists = prevNotifications.some(notification => notification.id === notificationId);
         if (exists) return prevNotifications; // Evitar duplicados
   
         return [
           ...prevNotifications,
           {
-            id: newOrder.tableNumber + new Date().getTime(),
+            id: notificationId, 
             tableNumber: newOrder.tableNumber,
             items: newOrder.items,
             total: newOrder.total,
-            action: 'kitchen'
+            action: 'kitchen',
+            isConfirmed: false,  // Inicialmente el pedido no está confirmado
+            isRejected: false,   // Inicialmente el pedido no está rechazado
           }
         ];
       });
@@ -52,25 +59,69 @@ const KitchenNotificationsScreen: React.FC = () => {
       socket.off('new_order_kitchen');
     };
   }, []);
-  
-  
-  
 
-  const handleNotificationPress = (notificationId: string) => {
-    Toast.show({
-      type: 'success',
-      text1: 'Notificación vista',
-      text2: `La notificación ${notificationId} ha sido gestionada.`,
-    });
+  const handleNotificationPress = (notification: Notification) => {
+    setSelectedNotification(notification);
+    setModalVisible(true); // Mostrar el modal cuando se selecciona una notificación
+    console.log("Modal abierto con la notificación: ", notification);
+  };
 
-    // Redirigir a la vista del pedido específico usando el ID de la notificación.
-    setTimeout(() => {
-      router.push(`/Kitchen/Orders/${notificationId}`);  // Aquí se pasa el ID de la notificación
-    }, 1000);
+  const handleConfirmOrder = () => {
+    if (selectedNotification) {
+      Toast.show({
+        type: 'success',
+        text1: 'Pedido confirmado',
+        text2: `Mesa ${selectedNotification.tableNumber} ha confirmado el pedido.`,
+      });
+
+      socket.emit('order_confirmed_kitchen', {
+        orderId: selectedNotification.id,
+        tableNumber: selectedNotification.tableNumber,
+        status: 'confirmed',
+      });
+
+      // Actualizar la notificación para agregar el símbolo de check
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === selectedNotification.id
+            ? { ...notification, isConfirmed: true }
+            : notification
+        )
+      );
+
+      setModalVisible(false); // Cerrar el modal después de confirmar
+    }
+  };
+
+  const handleRejectOrder = () => {
+    if (selectedNotification) {
+      Toast.show({
+        type: 'error',
+        text1: 'Pedido rechazado',
+        text2: `Mesa ${selectedNotification.tableNumber} ha rechazado el pedido.`,
+      });
+
+      socket.emit('order_rejected_kitchen', {
+        orderId: selectedNotification.id,
+        tableNumber: selectedNotification.tableNumber,
+        status: 'rejected',
+      });
+
+      // Actualizar la notificación para agregar el símbolo de "X"
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === selectedNotification.id
+            ? { ...notification, isRejected: true }
+            : notification
+        )
+      );
+
+      setModalVisible(false); // Cerrar el modal después de rechazar
+    }
   };
 
   const renderNotificationItem = ({ item }: { item: Notification }) => (
-    <TouchableOpacity onPress={() => handleNotificationPress(item.id)}>
+    <TouchableOpacity onPress={() => handleNotificationPress(item)}>
       <View style={styles.notificationCard}>
         <Text style={styles.notificationText}>
           <Text style={styles.boldText}>Mesa: {item.tableNumber}</Text>
@@ -81,6 +132,8 @@ const KitchenNotificationsScreen: React.FC = () => {
         <Text style={styles.notificationText}>
           Total: ${item.total ? item.total.toLocaleString() : '0'}
         </Text>
+        {item.isConfirmed && <Text style={styles.checkmark}>✅</Text>} 
+        {item.isRejected && <Text style={styles.rejected}>❌</Text>} 
       </View>
     </TouchableOpacity>
   );
@@ -93,6 +146,31 @@ const KitchenNotificationsScreen: React.FC = () => {
         keyExtractor={(item) => item.id}
         renderItem={renderNotificationItem}
       />
+      
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)} // Cerrar el modal
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {selectedNotification && (
+              <>
+                <Text style={styles.modalTitle}>Confirmar o Rechazar Pedido</Text>
+                <Text style={styles.modalText}>Mesa: {selectedNotification.tableNumber}</Text>
+                <Text style={styles.modalText}>Items: {selectedNotification.items}</Text>
+
+                <View style={styles.modalButtonContainer}>
+                  <Button title="Confirmar" onPress={handleConfirmOrder} color="#28a745" />
+                  <Button title="Rechazar" onPress={handleRejectOrder} color="#dc3545" />
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
       <Toast />
       <KitchenBottomBar />
     </View>
@@ -127,6 +205,41 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: 'bold',
+  },
+  checkmark: {
+    fontSize: 24,
+    color: 'green',
+    marginTop: 10,
+  },
+  rejected: {
+    fontSize: 24,
+    color: 'red',
+    marginTop: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)', // Fondo transparente
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
 

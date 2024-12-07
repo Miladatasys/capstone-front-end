@@ -14,6 +14,8 @@ interface Notification {
   items: string;
   total: number;
   action: string;
+  isConfirmed: boolean;  // Para manejar si está confirmado
+  isRejected: boolean;   // Para manejar si está rechazado
 }
 
 const NotificationsScreen: React.FC = () => {
@@ -36,7 +38,9 @@ const NotificationsScreen: React.FC = () => {
             tableNumber: newOrder.tableNumber,
             items: newOrder.items,
             total: newOrder.total,
-            action: 'bar'
+            action: 'bar',
+            isConfirmed: false,  // Inicialmente el pedido no está confirmado
+            isRejected: false,   // Inicialmente el pedido no está rechazado
           }
         ];
       });
@@ -52,23 +56,52 @@ const NotificationsScreen: React.FC = () => {
       socket.off('new_order_bar');
     };
   }, []);
-  
-  
 
-  const handleNotificationPress = (notificationId: string) => {
+  const handleNotificationPress = (notification: Notification) => {
+    // Lógica para abrir el modal cuando se selecciona la notificación
+    console.log("Notificación seleccionada:", notification);
+  };
+
+  const handleConfirmOrder = (notificationId: string) => {
+    // Confirmar el pedido
+    setNotifications((prevNotifications) =>
+      prevNotifications.map((notification) =>
+        notification.id === notificationId
+          ? { ...notification, isConfirmed: true }
+          : notification
+      )
+    );
+
     Toast.show({
       type: 'success',
-      text1: 'Notificación vista',
-      text2: `La notificación ${notificationId} ha sido gestionada.`,
+      text1: 'Pedido confirmado',
+      text2: `El pedido de la mesa ${notificationId} ha sido confirmado.`,
     });
 
-    setTimeout(() => {
-      router.push(`/bar/orders/${notificationId}`);  
-    }, 1000);
+    socket.emit('order_confirmed_bar', { orderId: notificationId, status: 'confirmed' });
+  };
+
+  const handleRejectOrder = (notificationId: string) => {
+    // Rechazar el pedido
+    setNotifications((prevNotifications) =>
+      prevNotifications.map((notification) =>
+        notification.id === notificationId
+          ? { ...notification, isRejected: true }
+          : notification
+      )
+    );
+
+    Toast.show({
+      type: 'error',
+      text1: 'Pedido rechazado',
+      text2: `El pedido de la mesa ${notificationId} ha sido rechazado.`,
+    });
+
+    socket.emit('order_rejected_bar', { orderId: notificationId, status: 'rejected' });
   };
 
   const renderNotificationItem = ({ item }: { item: Notification }) => (
-    <TouchableOpacity onPress={() => handleNotificationPress(item.id)}>
+    <TouchableOpacity>
       <View style={styles.notificationCard}>
         <Text style={styles.notificationText}>
           <Text style={styles.boldText}>Mesa: {item.tableNumber}</Text>
@@ -79,6 +112,20 @@ const NotificationsScreen: React.FC = () => {
         <Text style={styles.notificationText}>
           Total: ${item.total ? item.total.toLocaleString() : '0'}
         </Text>
+        {item.isConfirmed && <Text style={styles.checkmark}>✅</Text>}  
+        {item.isRejected && <Text style={styles.rejected}>❌</Text>}    
+        <View style={styles.buttonsContainer}>
+          {!item.isConfirmed && !item.isRejected && (
+            <>
+              <TouchableOpacity onPress={() => handleConfirmOrder(item.id)}>
+                <Text style={styles.confirmButton}>Confirmar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleRejectOrder(item.id)}>
+                <Text style={styles.rejectButton}>Rechazar</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -124,6 +171,31 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   boldText: {
+    fontWeight: 'bold',
+  },
+  checkmark: {
+    fontSize: 24,
+    color: 'green',
+    marginTop: 10,
+  },
+  rejected: {
+    fontSize: 24,
+    color: 'red',
+    marginTop: 10,
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  confirmButton: {
+    color: '#28a745',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  rejectButton: {
+    color: '#dc3545',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

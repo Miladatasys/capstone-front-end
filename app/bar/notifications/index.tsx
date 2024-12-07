@@ -21,31 +21,39 @@ const NotificationsScreen: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Conexión con el servidor de Socket.IO para recibir las notificaciones en la barra
     socket.on('new_order_bar', (newOrder: any) => {
       console.log('Nuevo pedido para la barra recibido:', newOrder);
-      setNotifications((prevNotifications) => [
-        ...prevNotifications,
-        {
-          id: newOrder.tableNumber + new Date().getTime(),
-          tableNumber: newOrder.tableNumber,
-          items: newOrder.items,
-          total: newOrder.total,
-          action: 'bar' // Asegúrate de que la acción sea "bar" para la barra
-        }
-      ]);
+  
+      // Verificar si la notificación ya está presente
+      setNotifications((prevNotifications) => {
+        const exists = prevNotifications.some(notification => notification.id === newOrder.tableNumber + new Date().getTime());
+        if (exists) return prevNotifications; // Evitar duplicados
+  
+        return [
+          ...prevNotifications,
+          {
+            id: newOrder.tableNumber + new Date().getTime(),
+            tableNumber: newOrder.tableNumber,
+            items: newOrder.items,
+            total: newOrder.total,
+            action: 'bar'
+          }
+        ];
+      });
+  
       Toast.show({
         type: 'success',
         text1: 'Nuevo pedido para barra',
         text2: `Mesa ${newOrder.tableNumber}: ${newOrder.items}`,
       });
     });
-
-    // Limpiar la conexión cuando el componente se desmonte
+  
     return () => {
-      socket.off('new_order_bar');  // Detener la escucha de eventos cuando el componente se desmonte
+      socket.off('new_order_bar');
     };
   }, []);
+  
+  
 
   const handleNotificationPress = (notificationId: string) => {
     Toast.show({
@@ -54,9 +62,8 @@ const NotificationsScreen: React.FC = () => {
       text2: `La notificación ${notificationId} ha sido gestionada.`,
     });
 
-    // Redirigir a la vista del pedido específico usando el ID de la notificación.
     setTimeout(() => {
-      router.push(`/bar/orders/${notificationId}`);  // Aquí se pasa el ID de la notificación
+      router.push(`/bar/orders/${notificationId}`);  
     }, 1000);
   };
 

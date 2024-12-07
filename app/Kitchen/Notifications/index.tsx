@@ -3,10 +3,10 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import KitchenBottomBar from '../../../components/Kitchen/BottomBar/KitchenBottomBar';
-import io from 'socket.io-client';  // Importar socket.io-client
+import io from 'socket.io-client';  
 import { API_URL } from '@env';
 
-const socket = io(API_URL);  // Conectar al servidor Socket.IO
+const socket = io(API_URL);  
 
 interface Notification {
   id: string;
@@ -52,6 +52,8 @@ const KitchenNotificationsScreen: React.FC = () => {
       socket.off('new_order_kitchen');
     };
   }, []);
+  
+  
   
 
   const handleNotificationPress = (notificationId: string) => {

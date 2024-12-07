@@ -117,58 +117,48 @@ const BarDetailsScreen: React.FC = () => {
   };
 
   const handleRequestOrder = async () => {
-    // Filtrar y mapear los productos seleccionados
     const selectedProducts = products
       .filter((product) => quantities[product.product_id] > 0)
       .map((product) => ({
         product_id: product.product_id,
         name: product.name,
-        price: parseFloat(product.price), // Precio del producto
-        quantity: quantities[product.product_id], // Cantidad seleccionada
-        category: product.category, // Categoría del producto
+        price: parseFloat(product.price),
+        quantity: quantities[product.product_id],
+        category: product.category,
       }));
 
     if (selectedProducts.length > 0) {
       const newOrder = {
         products: selectedProducts,
-        user_id, // Asegurarse de que sea un número
+        user_id, 
         table_id,
         bar_id,
-        special_notes: "", // Opcional
+        special_notes: "",
         orderGroup_id: null,
         orderTotal_id
       };
 
-      console.log('Datos enviados:', newOrder);
-      // console.log('Endpoint llamado:', `${API_URL}/api/orders`);
-
       try {
-        // Enviar datos al backend
         const response = await axios.post(`${API_URL}/api/orders`, newOrder);
-        console.log('Orden creada exitosamente:', response.data);
 
-    // Emitir notificación para la barra
-    const drinks = selectedProducts.filter(product => product.category === 'Drink');
-    if (drinks.length > 0) {
-      socket.emit('new_order_bar', {
-        tableNumber: table_id,
-        items: drinks.map(product => product.name),
-        total: total,
-      });
-    }
+        const drinks = selectedProducts.filter(product => product.category === 'Drink');
+        if (drinks.length > 0) {
+          socket.emit('new_order_bar', {
+            tableNumber: table_id,
+            items: drinks.map(product => product.name),
+            total: total,
+          });
+        }
 
-    // Emitir notificación para la cocina
-    const foods = selectedProducts.filter(product => product.category === 'Food');
-    if (foods.length > 0) {
-      socket.emit('new_order_kitchen', {
-        tableNumber: table_id,
-        items: foods.map(product => product.name),
-        total: total,
-      });
-    }
+        const foods = selectedProducts.filter(product => product.category === 'Food');
+        if (foods.length > 0) {
+          socket.emit('new_order_kitchen', {
+            tableNumber: table_id,
+            items: foods.map(product => product.name),
+            total: total,
+          });
+        }
 
-
-        // Guardar la orden localmente
         const updatedExistingOrders = [
           ...existingOrders,
           { ...newOrder, orderTime: new Date().toLocaleString() },
@@ -180,17 +170,11 @@ const BarDetailsScreen: React.FC = () => {
           JSON.stringify(updatedExistingOrders)
         );
 
-        // Redirigir a la pantalla de resumen del pedido
-        const productsString = JSON.stringify(updatedExistingOrders);
-        console.log('creator_user_id: ', creator_user_id);
         router.push({
           pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
-          // params: { products: productsString, table_id, bar_id, user_id },
           params: { products: JSON.stringify(updatedExistingOrders), table_id, bar_id, user_id, orderTotal_id, creator_user_id },
         });
 
-
-        // Resetear cantidades y total
         const resetQuantities = {};
         products.forEach((product) => {
           resetQuantities[product.product_id] = 0;
@@ -215,7 +199,11 @@ const BarDetailsScreen: React.FC = () => {
       Toast.show({
         type: 'info',
         text1: 'No hay productos seleccionados',
-        text2: 'Por favor selecciona algún producto para continuar.',
+        text2: 'Puedes continuar con el resumen del pedido.',
+      });
+      router.push({
+        pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
+        params: { products: JSON.stringify(existingOrders), table_id, bar_id, user_id, orderTotal_id, creator_user_id },
       });
     }
   };

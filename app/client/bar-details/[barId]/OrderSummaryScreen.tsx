@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
-
+import axios from 'axios';
+import { API_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Product {
@@ -10,7 +11,7 @@ interface Product {
   name: string;
   price: number;
   quantity: number;
-  originalQuantity?: number;
+  user_id: string;
   available: boolean;
 }
 
@@ -23,62 +24,61 @@ interface Order {
 
 export default function OrderSummaryScreen() {
   const router = useRouter();
-  const { products: productsParam, table_id, bar_id, user_id, group_id, userName } = useLocalSearchParams();
+  const { table_id, bar_id, user_id, group_id, userName, orderTotal_id } = useLocalSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState<number>(0);
+  const [isGroupCreator, setIsGroupCreator] = useState<boolean>(false);
 
   useEffect(() => {
-    if (typeof productsParam === 'string') {
+    const fetchOrderDetails = async () => {
       try {
-        const parsedOrders = JSON.parse(productsParam);
+        const response = await axios.get(`${API_URL}/api/orderdetail/${orderTotal_id}`);
+        const { products, total } = response.data;
+
+        const parsedOrders = products.map((product) => ({
+          products: [product],
+          orderTime: new Date().toLocaleString(),
+          total: product.price * product.quantity,
+        }));
 
         const normalizedOrders = parsedOrders.map((order) => {
-          if (order.newOrder) {
-            const normalizedProducts = order.newOrder.products.map((prod, index) => ({
-              ...prod,
-              id: `${prod.product_id}-${Date.now()}-${index}`, // Generar un ID único
-            }));
-            console.log('Productos normalizados (newOrder):', normalizedProducts);
+          const normalizedProducts = order.products.map((prod, index) => ({
+            ...prod,
+            id: `${prod.id}-${Date.now()}-${index}`, // Generate a unique ID
+          }));
+          console.log('Normalized products:', normalizedProducts);
 
-            return {
-              id: `order-${Date.now()}-${Math.random()}`,
-              products: normalizedProducts,
-              orderTime: order.orderTime || '',
-              total: normalizedProducts.reduce((acc, prod) => acc + prod.price * prod.quantity, 0),
-            };
-          } else if (order.products) {
-            const normalizedProducts = order.products.map((prod, index) => ({
-              ...prod,
-              id: `${prod.product_id}-${Date.now()}-${index}`, // Generar un ID único
-            }));
-            console.log('Productos normalizados (products):', normalizedProducts);
+          return {
+            id: `order-${Date.now()}-${Math.random()}`,
+            products: normalizedProducts,
+            orderTime: order.orderTime || '',
+            total: normalizedProducts.reduce((acc, prod) => acc + prod.price * prod.quantity, 0),
+          };
+        });
 
-            return {
-              id: `order-${Date.now()}-${Math.random()}`,
-              products: normalizedProducts,
-              orderTime: order.orderTime || '',
-              total: normalizedProducts.reduce((acc, prod) => acc + prod.price * prod.quantity, 0),
-            };
-          }
-          return null;
-        }).filter(order => order !== null);
-
-        console.log('Ordenes normalizadas:', normalizedOrders);
+        console.log('Normalized orders:', normalizedOrders);
         setOrders(normalizedOrders);
         calculateTotal(normalizedOrders);
+
+        if (group_id) {
+          const groupResponse = await axios.get(`${API_URL}/api/group/${group_id}`);
+          const groupData = groupResponse.data;
+          setIsGroupCreator(groupData.creator_user_id === user_id);
+        } else {
+          setIsGroupCreator(true);
+        }
       } catch (error) {
-        console.error('Error al procesar productsParam:', error);
+        console.error('Error fetching order details:', error);
         Toast.show({
           type: 'error',
           text1: 'Error',
-          text2: 'Los datos de los pedidos no se pudieron procesar.',
+          text2: 'No se pudieron obtener los detalles del pedido.',
         });
       }
-    }
-  }, [productsParam]);
+    };
 
-
-
+    fetchOrderDetails();
+  }, [orderTotal_id, group_id, user_id]);
 
   const calculateTotal = useCallback((orders: Order[]) => {
     const totalValue = orders.reduce((acc, order) => acc + order.total, 0);
@@ -103,6 +103,8 @@ export default function OrderSummaryScreen() {
           total,
           bar_id,
           table_id,
+          creator_user_id: user_id,
+          orderTotal_id,
         },
       });
     } catch (error) {
@@ -116,7 +118,7 @@ export default function OrderSummaryScreen() {
   };
 
   const handleContinueOrdering = () => {
-    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${group_id}`);
+    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${group_id}&orderTotal_id=${orderTotal_id}`);
   };
 
   const cleanOrders = async () => {

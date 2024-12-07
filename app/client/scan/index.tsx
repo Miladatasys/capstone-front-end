@@ -63,7 +63,7 @@ export default function ClientScanScreen() {
                     table_id
                 });
                 orderTotal_id = createOrderResponse.data.orderTotal_id;
-                console.log('Sesión creada:', orderTotal_id);
+                console.log('Sesión creada, orderTotal_id: ', orderTotal_id);
             } catch (error) {
                 console.error('Error al crear la sesión de pedido:', error.response?.data || error.message);
                 Toast.show({
@@ -92,7 +92,7 @@ export default function ClientScanScreen() {
                 });
 
                 // Redirigir a la vista del grupo
-                router.push(`/client/bar-details/${bar_id}?bar_id=${bar_id}&table_id=${table_id}&user_id=${user_id}&group_id=${group_id}&orderTotal_id=${orderTotal_id}`);
+                router.push(`/client/bar-details/${bar_id}?bar_id=${bar_id}&table_id=${table_id}&user_id=${user_id}&group_id=${group_id}&orderTotal_id=${orderTotal_id}&creator_user_id=${user_id}`);
             } catch (error) {
                 console.error('Error al unirse al grupo:', error.response?.data || error.message);
                 Toast.show({
@@ -105,8 +105,8 @@ export default function ClientScanScreen() {
         } else {
             // Aquí manejamos el flujo normal si no es un QR de grupo
             console.log('QR de mesa');
-            console.log('Datos procesados bar_id:', bar_id, 'table_id:', table_id, 'user_id: ', user_id);
-            router.push(`/client/scan/InviteClientsScreen?bar_id=${bar_id}&table_id=${table_id}&user_id=${user_id}&orderTotal_id=${orderTotal_id}`);
+            console.log('Datos procesados bar_id:', bar_id, 'table_id:', table_id, 'user_id: ', user_id, 'orderTotal_id: ', orderTotal_id);
+            router.push(`/client/scan/InviteClientsScreen?bar_id=${bar_id}&table_id=${table_id}&user_id=${user_id}&orderTotal_id=${orderTotal_id}&creator_user_id=${user_id}`);
         }
 
     } catch (error) {

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } fr
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 interface SavedCard {
   id: string;
@@ -14,7 +15,18 @@ export default function PaymentMethodScreen() {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const router = useRouter();
-  const { total, bar_id, table_id } = useLocalSearchParams();
+  const { total, bar_id, table_id, creator_user_id, user_id } = useLocalSearchParams();
+
+  useEffect(() => {
+    if (creator_user_id !== user_id) {
+      Toast.show({
+        type: 'error',
+        text1: 'Acceso Denegado',
+        text2: 'Solo el creador del pedido puede seleccionar el método de pago.',
+      });
+      router.back();
+    }
+  }, [creator_user_id, user_id]);
 
   useEffect(() => {
     const fetchSavedCards = async () => {
@@ -84,11 +96,19 @@ export default function PaymentMethodScreen() {
     }
   };
 
+  const handleGoBack = () => {
+    router.back();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#2B2D42" />
+        </TouchableOpacity>
         <Text style={styles.title}>Selecciona un Método de Pago</Text>
-
+      </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.subTitle}>Tarjetas Guardadas</Text>
         {savedCards.map((card) => (
           <TouchableOpacity
@@ -136,14 +156,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9f9f9',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  backButton: {
+    marginRight: 15,
+  },
   scrollContent: {
     padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#2B2D42',
-    marginBottom: 20,
+    flex: 1,
   },
   subTitle: {
     fontSize: 18,
@@ -197,3 +227,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+

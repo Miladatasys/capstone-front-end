@@ -7,13 +7,13 @@ import axios from 'axios';
 import { API_URL } from '@env';
 import ClientHeader from '../../../../components/ClientHeader/ClientHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import io from 'socket.io-client';  
+import io from 'socket.io-client';
 
 const socket = io(API_URL);  // Conectar al servidor Socket.IO
 
 const BarDetailsScreen: React.FC = () => {
   const router = useRouter();
-  const { bar_id, table_id, user_id, clearCart } = useLocalSearchParams();
+  const { bar_id, table_id, user_id, orderTotal_id, creator_user_id, clearCart } = useLocalSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState<number>(0);
@@ -135,11 +135,12 @@ const BarDetailsScreen: React.FC = () => {
         table_id,
         bar_id,
         special_notes: "", // Opcional
-        orderGroup_id: null
+        orderGroup_id: null,
+        orderTotal_id
       };
 
       console.log('Datos enviados:', newOrder);
-      console.log('Endpoint llamado:', `${API_URL}/api/orders`);
+      // console.log('Endpoint llamado:', `${API_URL}/api/orders`);
 
       try {
         // Enviar datos al backend
@@ -181,10 +182,13 @@ const BarDetailsScreen: React.FC = () => {
 
         // Redirigir a la pantalla de resumen del pedido
         const productsString = JSON.stringify(updatedExistingOrders);
+        console.log('creator_user_id: ', creator_user_id);
         router.push({
           pathname: `/client/bar-details/${bar_id}/OrderSummaryScreen`,
-          params: { products: productsString, table_id, bar_id, user_id },
+          // params: { products: productsString, table_id, bar_id, user_id },
+          params: { products: JSON.stringify(updatedExistingOrders), table_id, bar_id, user_id, orderTotal_id, creator_user_id },
         });
+
 
         // Resetear cantidades y total
         const resetQuantities = {};

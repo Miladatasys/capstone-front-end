@@ -89,7 +89,7 @@ export default function InviteClientsScreen() {
           <Text style={styles.qrText}>Escanea este código QR para unirte al pedido:</Text>
           <View style={styles.qrCodeWrapper}>
             <QRCode
-              value={`{"bar_id": "${bar_id}", "table_id": "${table_id}", "user_id": "${user_id}", "group_id": "${groupId}", "orderTotal_id": "${orderTotal_id}"}`}
+              value={`{"bar_id": "${bar_id}", "table_id": "${table_id}", "user_id": "${user_id}", "group_id": "${groupId}", "orderTotal_id": "${orderTotal_id}", "creator_user_id": "${user_id}"}`}
               size={200}
             />
           </View>

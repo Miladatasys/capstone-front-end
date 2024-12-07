@@ -6,7 +6,7 @@ import { useRouter, usePathname, useLocalSearchParams } from 'expo-router';
 const BottomNavBarDetails: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { barId } = useLocalSearchParams();
+  const { barId, user_id } = useLocalSearchParams();
 
   const getTabColor = (tabRoutes: string[]) => {
     return tabRoutes.some((tabRoute) => pathname.includes(tabRoute)) ? '#EF233C' : '#747272';
@@ -33,6 +33,14 @@ const BottomNavBarDetails: React.FC = () => {
     );
   };
 
+  const navigateToOrdersHistory = () => {
+    console.log('Navigating to OrdersHistoryScreen with:', { barId, user_id });
+    router.push({
+      pathname: `/client/bar-details/${barId}/OrdersHistoryScreen`,
+      params: { user_id },
+    });
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={handleHomePress}>
@@ -51,7 +59,7 @@ const BottomNavBarDetails: React.FC = () => {
         <Text style={getTextStyle(['/client/bar-details', '/client/orders'])}>Carta</Text>
       </View>
 
-      <TouchableOpacity onPress={() => router.push(`/client/bar-details/${barId}/OrdersHistoryScreen`)}>
+      <TouchableOpacity onPress={navigateToOrdersHistory}>
         <View style={styles.iconContainer}>
           <Ionicons name="time-outline" size={24} color={getTabColor([`/client/bar-details/${barId}/OrdersHistoryScreen`])} />
           <Text style={getTextStyle([`/client/bar-details/${barId}/OrdersHistoryScreen`])}>Historial</Text>

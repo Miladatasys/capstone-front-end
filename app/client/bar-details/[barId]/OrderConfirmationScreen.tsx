@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OrderConfirmationScreen() {
   const router = useRouter();
-  const { paymentMethod, bar_id, table_id, total } = useLocalSearchParams();
+  const { paymentMethod, bar_id, table_id, total, user_id } = useLocalSearchParams();
 
   useEffect(() => {
     const completeOrder = async () => {
@@ -23,6 +23,7 @@ export default function OrderConfirmationScreen() {
             total: parseFloat(total as string),
             status: 'Completado',
             barId: bar_id,
+            user_id: user_id,
           };
 
           // Obtener órdenes completadas existentes
@@ -58,7 +59,7 @@ export default function OrderConfirmationScreen() {
   const handleGoHome = () => {
     router.push({
       pathname: `/client/bar-details/${bar_id}`,
-      params: { bar_id, table_id, clearCart: 'true' }
+      params: { bar_id, table_id, clearCart: 'true', user_id }
     });
   };
 

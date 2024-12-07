@@ -2,64 +2,85 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, FlatList, SafeAreaView, StatusBar } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { API_URL } from '@env';
 
 interface Order {
   id: string;
   table: string;
-  items: { name: string; price: number; quantity: number }[];
+  items: { name: string; price: number; quantity: number; id_prod: string }[];
   total: number;
   status: string;
   customer: string;
 }
 
 export default function BarOrderDetails() {
-  const { id } = useLocalSearchParams();
+  const { tableNumber } = useLocalSearchParams();
   const router = useRouter();
 
   const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    const simulatedOrder: Order = {
-      id: id as string,
-      table: '3',
-      items: [
-        { name: 'Bebida 1', price: 3000, quantity: 2 },
-        { name: 'Bebida 2', price: 2500, quantity: 1 },
-        { name: 'Bebida 3', price: 4000, quantity: 3 },
-        { name: 'Bebida 4', price: 1680, quantity: 1 },
-      ],
-      total: 13180,
-      status: 'Pendiente',
-      customer: 'Nombre',
+    const fetchOrderDetails = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/bar/queue`);
+        const orders = response.data.filter(
+          (order: any) => order.tableNumber === tableNumber
+        );
+
+        if (orders.length > 0) {
+          const items = orders.map((product: any) => ({
+            id_prod: product.id,
+            name: product.product_name,
+            price: parseFloat(product.unit_price),
+            quantity: product.quantity,
+          }));
+
+          setOrder({
+            id: tableNumber as string,
+            table: tableNumber as string,
+            items: items,
+            total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+            status: 'pending',
+            customer: 'Desconocido', // Puedes ajustar esto según los datos disponibles
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching order details:', error);
+      }
     };
 
-    setOrder(simulatedOrder);
-  }, [id]);
+    fetchOrderDetails();
+  }, [tableNumber]);
 
-  const handleConfirmOrder = () => {
-    Alert.alert('Confirmación', '¿Confirmar este pedido?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Aceptar',
-        onPress: () => {
-          Alert.alert('Éxito', 'El pedido ha sido confirmado.');
-          router.push('/bar/orders/Orders');
-        },
-      },
-    ]);
+  const handleConfirmOrder = async () => {
+    const barQueueIds = order?.items.map((item) => item.id_prod);
+
+    try {
+      await axios.put(`${API_URL}/api/bar/confirm`, {
+        barQueue_ids: barQueueIds,
+      });
+
+      Alert.alert('Éxito', 'El pedido ha sido confirmado.');
+      router.push('/bar/orders');
+    } catch (error) {
+      console.error('Error confirming order:', error);
+    }
   };
 
-  const handleRejectOrder = () => {
-    Alert.alert('Confirmación', '¿Rechazar este pedido?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Aceptar',
-        onPress: () => {
-          Alert.alert('Pedido Rechazado', 'El pedido ha sido rechazado.');
-          router.push('/bar/orders/Orders');
-        },
-      },
-    ]);
+  const handleRejectOrder = async () => {
+    const barQueueIds = order?.items.map((item) => item.id_prod);
+
+    try {
+      await axios.put(`${API_URL}/api/bar/reject`, {
+        barQueue_ids: barQueueIds,
+      });
+
+      Alert.alert('Pedido Rechazado', 'El pedido ha sido rechazado.');
+      router.push('/bar/orders');
+    } catch (error) {
+      console.error('Error rejecting order:', error);
+    }
   };
 
   if (!order) {
@@ -97,7 +118,7 @@ export default function BarOrderDetails() {
 
       <Text style={styles.sectionTitle}>Productos</Text>
       <FlatList
-        data={order.items}
+        data={order?.items}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
           <View style={styles.itemBox}>
@@ -124,6 +145,7 @@ export default function BarOrderDetails() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

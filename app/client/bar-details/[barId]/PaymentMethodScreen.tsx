@@ -85,6 +85,8 @@ export default function PaymentMethodScreen() {
         text2: `El pago ha sido registrado. Estado del pedido: ${orderStatus}`,
       });
 
+
+      console.log('Navigating to OrderConfirmationScreen con user_id:', user_id);
       router.push({
         pathname: `/client/bar-details/${bar_id}/OrderConfirmationScreen`,
         params: {
@@ -93,7 +95,8 @@ export default function PaymentMethodScreen() {
           bar_id,
           table_id,
           paymentId,
-          orderTotal_id
+          orderTotal_id,
+          user_id,
         },
       });
     } catch (error) {

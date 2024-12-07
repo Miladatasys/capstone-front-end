@@ -22,43 +22,50 @@ const convertToCLP = (usdAmount: number) => {
   return Math.round(usdAmount * exchangeRate);
 };
 
+const formatCLP = (amount: number) => {
+  return `$${amount.toLocaleString('es-CL')}`;
+};
+
 const OrdersHistoryScreen: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
-  const { barId } = useLocalSearchParams();
+  const { barId, user_id } = useLocalSearchParams();
 
   useEffect(() => {
+    console.log('Bar ID:', barId);
+    console.log('User ID:', user_id);
     fetchOrders();
-  }, [barId]);
+  }, [barId, user_id]);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/history/${barId}`);
-      console.log('Orders from backend:', response.data.orders);
+      console.log(`Fetching orders for user_id: ${user_id}`);
+      const response = await axios.get(`${API_URL}/api/history/${user_id}`);
+      console.log('Payments from backend:', response.data.payments);
   
       // Mapear los datos para que coincidan con la interfaz Order
-      const mappedOrders = response.data.orders.map((order: any) => ({
-        id: order.ordertotal_id.toString(),
-        date: order.creation_date,
-        total: parseFloat(order.total),
-        status: order.status,
-        items: order.products.map((product: any) => ({
+      const mappedOrders = response.data.payments.map((payment: any) => ({
+        id: payment.payment_id.toString(),
+        date: payment.transaction_date,
+        total: parseFloat(payment.amount),
+        status: payment.status,
+        items: payment.products.map((product: any) => ({
           name: product.product_name,
           quantity: product.quantity,
           price: parseFloat(product.unit_price),
         })),
       }));
   
-      setOrders(mappedOrders.reverse());
+      setOrders(mappedOrders);
     } catch (error) {
-      console.error('Error al obtener los pedidos del backend:', error);
+      console.error('Error al obtener los pagos del backend:', error);
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'No se pudieron cargar los pedidos del backend.',
+        text2: 'No se pudieron cargar los pagos del backend.',
       });
     } finally {
       setLoading(false);
@@ -71,7 +78,7 @@ const OrdersHistoryScreen: React.FC = () => {
       <View style={styles.orderHeader}>
         <Text style={styles.orderDate}>{new Date(item.date).toLocaleDateString()}</Text>
       </View>
-      <Text style={styles.orderTotal}>Total: ${convertToCLP(item.total).toLocaleString()} </Text>
+      <Text style={styles.orderTotal}>Total: {formatCLP(item.total)}</Text>
       <Text style={styles.orderTime}>{new Date(item.date).toLocaleTimeString()}</Text>
       <Text style={styles.orderItems}>
         {item.items ? item.items.map(i => `${i.quantity}x ${i.name}`).join(', ') : 'No items'}
@@ -114,6 +121,13 @@ const OrdersHistoryScreen: React.FC = () => {
 
   const handleGoBack = () => {
     router.back();
+  };
+
+  const navigateToOrdersHistory = () => {
+    router.push({
+      pathname: `/client/bar-details/${barId}/OrdersHistoryScreen`,
+      params: { user_id },
+    });
   };
 
   if (loading) {

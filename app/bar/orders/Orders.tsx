@@ -1,217 +1,247 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions, SafeAreaView, StatusBar } from 'react-native';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import BarBottomBar from '../../../components/Bar/BottomBar/BarBottomBar';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, FlatList, SafeAreaView, StatusBar } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
+import axios from 'axios';
+import { API_URL } from '@env';
 
 interface Order {
   id: string;
   table: string;
-  items: string;
+  items: { name: string; price: number; quantity: number; id_prod: string }[];
   total: number;
-  status: 'Rechazado' | 'Aceptado';
-  timestamp: string;
+  status: string;
+  customer: string;
 }
 
-const Orders: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+export default function BarOrderDetails() {
+  const { tableNumber } = useLocalSearchParams();
   const router = useRouter();
 
-  const ordersData: Order[] = [
-    { id: '1', table: 'Mesa 1', items: 'Cerveza, Pisco Sour', total: 12000, status: 'Aceptado', timestamp: '2023-05-20T14:30:00Z' },
-    { id: '2', table: 'Mesa 2', items: 'Vodka, Papas Fritas', total: 8000, status: 'Aceptado', timestamp: '2023-05-20T15:15:00Z' },
-    { id: '4', table: 'Mesa 4', items: 'Cerveza', total: 4000, status: 'Rechazado', timestamp: '2023-05-20T16:45:00Z' },
-  ];
+  const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    setOrders(ordersData);
-  }, []);
+    const fetchOrderDetails = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/bar/queue`);
+        const orders = response.data.filter(
+          (order: any) => order.tableNumber === tableNumber
+        );
 
-  const renderOrderItem = ({ item }: { item: Order }) => (
-    <TouchableOpacity
-      style={styles.orderItem}
-      onPress={() => router.push(`/bar/orders/OrderDetail?id=${item.id}`)}
-      accessibilityRole="button"
-      accessibilityLabel={`Ver detalles del pedido de ${item.table}`}
-    >
-      <View style={styles.orderHeader}>
-        <Text style={styles.tableText}>{item.table}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{item.status}</Text>
-        </View>
-      </View>
-      <Text style={styles.itemsText}>{item.items}</Text>
-      <View style={styles.orderFooter}>
-        <Text style={styles.totalText}>${item.total.toLocaleString()}</Text>
-        <Text style={styles.timestampText}>{new Date(item.timestamp).toLocaleTimeString()}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+        if (orders.length > 0) {
+          const items = orders.map((product: any) => ({
+            id_prod: product.id,
+            name: product.product_name,
+            price: parseFloat(product.unit_price),
+            quantity: product.quantity,
+          }));
 
-  const getStatusColor = (status: Order['status']) => {
-    switch (status) {
-      case 'Aceptado':
-        return '#4CAF50';
-      case 'Rechazado':
-        return '#FF6347';
-      default:
-        return '#000';
+          setOrder({
+            id: tableNumber as string,
+            table: tableNumber as string,
+            items: items,
+            total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+            status: 'pending',
+            customer: 'Desconocido', // Puedes ajustar esto según los datos disponibles
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching order details:', error);
+      }
+    };
+
+    fetchOrderDetails();
+  }, [tableNumber]);
+
+  const handleConfirmOrder = async () => {
+    const barQueueIds = order?.items.map((item) => item.id_prod);
+
+    try {
+      await axios.put(`${API_URL}/api/bar/confirm`, {
+        barQueue_ids: barQueueIds,
+      });
+
+      Alert.alert('Éxito', 'El pedido ha sido confirmado.');
+      router.push('/bar/orders');
+    } catch (error) {
+      console.error('Error confirming order:', error);
     }
   };
 
-  const filterOrdersByStatus = (status: Order['status'] | 'Todos') => {
-    if (status === 'Todos') return orders;
-    return orders.filter(order => order.status === status);
+  const handleRejectOrder = async () => {
+    const barQueueIds = order?.items.map((item) => item.id_prod);
+
+    try {
+      await axios.put(`${API_URL}/api/bar/reject`, {
+        barQueue_ids: barQueueIds,
+      });
+
+      Alert.alert('Pedido Rechazado', 'El pedido ha sido rechazado.');
+      router.push('/bar/orders');
+    } catch (error) {
+      console.error('Error rejecting order:', error);
+    }
   };
 
-  const renderOrders = (status: Order['status'] | 'Todos') => () => (
-    <FlatList
-      data={filterOrdersByStatus(status)}
-      renderItem={renderOrderItem}
-      keyExtractor={item => item.id}
-      contentContainerStyle={styles.listContent}
-    />
-  );
-
-  const [index, setIndex] = useState(0);
-  const [routes] = useState([
-    { key: 'all', title: 'Todos' },
-    { key: 'accepted', title: 'Aceptado' },
-    { key: 'rejected', title: 'Rechazado' },
-  ]);
-
-  const renderScene = SceneMap({
-    all: renderOrders('Todos'),
-    accepted: renderOrders('Aceptado'),
-    rejected: renderOrders('Rechazado'),
-  });
+  // Verificar si el pedido está disponible antes de renderizar
+  if (!order) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Cargando...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#333" />
+      <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <Text style={styles.title}>Pedidos</Text>
-        <TouchableOpacity 
-          onPress={() => router.push('/bar/auth/BarSignInScreen')} 
-          accessibilityLabel="Ir a inicio"
-        >
-          <Ionicons name="exit-outline" size={24} color="#fff" />
+        <Text style={styles.title}>Detalles del Pedido</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
       </View>
 
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndex}
-        initialLayout={{ width: Dimensions.get('window').width }}
-        renderTabBar={props => (
-          <TabBar
-            {...props}
-            scrollEnabled={true}
-            indicatorStyle={styles.tabIndicator}
-            style={styles.tabBar}
-            labelStyle={styles.tabLabel}
-            tabStyle={styles.tab}
-            activeColor="#EF233C"
-            inactiveColor="#333"
-          />
+      <View style={styles.orderInfo}>
+        <View style={styles.infoItem}>
+          <Ionicons name="restaurant" size={20} color="#666" />
+          <Text style={styles.infoText}>Mesa: {order.table}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Ionicons name="person" size={20} color="#666" />
+          <Text style={styles.infoText}>Cliente: {order.customer}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Ionicons name="pricetag" size={20} color="#666" />
+          <Text style={styles.infoText}>Total: ${order.total.toLocaleString()}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Productos</Text>
+      <FlatList
+        data={order?.items}
+        keyExtractor={(item) => item.name}
+        renderItem={({ item }) => (
+          <View style={styles.itemBox}>
+            <View style={styles.itemInfo}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <Text style={styles.itemPrice}>${item.price.toLocaleString()}</Text>
+            </View>
+            <View style={styles.quantityBox}>
+              <Text style={styles.quantityText}>{item.quantity}</Text>
+            </View>
+          </View>
         )}
+        style={styles.itemList}
       />
 
-      <BarBottomBar />
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.rejectButton} onPress={handleRejectOrder}>
+          <Text style={styles.buttonText}>Rechazar Pedido</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmOrder}>
+          <Text style={styles.buttonText}>Confirmar Pedido</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#333',
+    marginBottom: 20,
+  },
+  backButton: {
+    padding: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
   },
-  listContent: {
-    padding: 16,
+  orderInfo: {
+    marginBottom: 20,
   },
-  orderItem: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  orderHeader: {
+  infoItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  tableText: {
-    fontSize: 18,
+  infoText: {
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    marginBottom: 10,
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  itemList: {
+    marginBottom: 20,
   },
-  statusText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  itemsText: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 8,
-  },
-  orderFooter: {
+  itemBox: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#f1f1f1',
+    borderRadius: 8,
   },
-  totalText: {
+  itemInfo: {
+    flexDirection: 'column',
+  },
+  itemName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
   },
-  timestampText: {
-    fontSize: 12,
-    color: '#888',
-  },
-  tabBar: {
-    backgroundColor: '#fff',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  tabIndicator: {
-    backgroundColor: '#EF233C',
-  },
-  tabLabel: {
-    fontWeight: '600',
+  itemPrice: {
     fontSize: 14,
-    textTransform: 'uppercase',
+    color: '#666',
   },
-  tab: {
-    width: 'auto',
+  quantityBox: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  rejectButton: {
+    padding: 15,
+    backgroundColor: '#f44336',
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 10,
+  },
+  confirmButton: {
+    padding: 15,
+    backgroundColor: '#4caf50',
+    borderRadius: 8,
+    flex: 1,
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
   },
 });
-
-export default Orders;

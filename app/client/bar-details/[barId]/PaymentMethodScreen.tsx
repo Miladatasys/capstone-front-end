@@ -58,6 +58,7 @@ export default function PaymentMethodScreen() {
   }, []);
 
   const handleConfirmPaymentMethod = async () => {
+    console.log('Confirming payment method');
     if (!selectedMethod) {
       Toast.show({
         type: 'info',
@@ -69,22 +70,25 @@ export default function PaymentMethodScreen() {
     }
 
     try {
+      console.log('Sending payment request to backend');
       const response = await axios.post(`${API_URL}/api/payments/${orderTotal_id}/pay`, {
         user_id,
         payment_method: selectedMethod,
         amounts: [total], // Assuming a single payment for the total amount
       });
 
-      const { paymentIds, orderTotal_id: returnedOrderTotalId } = response.data;
+      console.log('Payment response:', response.data);
+
+      const { paymentId, orderStatus } = response.data;
+
+      console.log('Payment ID:', paymentId);
+      console.log('Order Total ID:', orderTotal_id);
 
       Toast.show({
         type: 'success',
         text1: 'Pago Exitoso',
-        text2: `El pago ha sido registrado. Estado del pedido: ${response.data.orderStatus}`,
+        text2: `El pago ha sido registrado. Estado del pedido: ${orderStatus}`,
       });
-
-      console.log('Payment IDs:', paymentIds);
-      console.log('Order Total ID:', returnedOrderTotalId);
 
       router.push({
         pathname: `/client/bar-details/${bar_id}/OrderConfirmationScreen`,
@@ -93,8 +97,8 @@ export default function PaymentMethodScreen() {
           total,
           bar_id,
           table_id,
-          paymentIds,
-          orderTotal_id: returnedOrderTotalId
+          paymentId,
+          orderTotal_id
         },
       });
     } catch (error) {

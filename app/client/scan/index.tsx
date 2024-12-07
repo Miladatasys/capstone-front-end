@@ -45,7 +45,9 @@ export default function ClientScanScreen() {
 
     try {
         const parsedData = JSON.parse(data);
+        console.log('Parsed QR data:', parsedData);
         const { bar_id, table_id, group_id, orderTotal_id: exOrderTotal_id } = parsedData;
+        console.log('Extracted bar_id:', bar_id, 'table_id:', table_id, 'group_id:', group_id, 'orderTotal_id:', exOrderTotal_id);
 
         console.log("ParseData: ", parsedData);
         if (!bar_id || !table_id) {

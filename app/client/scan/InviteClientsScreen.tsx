@@ -54,12 +54,12 @@ export default function InviteClientsScreen() {
 
   const handleContinueAlone = () => {
     console.log('Continuando hacia el menú...');
-    router.push(`/client/bar-details/${bar_id}?&user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&orderTotal_id=${orderTotal_id}`);
+    router.push(`/client/bar-details/${bar_id}?&user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&orderTotal_id=${orderTotal_id}&creator_user_id=${user_id}`);
   };
 
   const handleGoToMenu = () => {
     console.log('Ir al menú después de crear el grupo.');
-    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${groupId}&orderTotal_id=${orderTotal_id}`);
+    router.push(`/client/bar-details/${bar_id}?user_id=${user_id}&table_id=${table_id}&bar_id=${bar_id}&group_id=${groupId}&orderTotal_id=${orderTotal_id}&creator_user_id=${user_id}`);
   };
 
   const handleRescan = () => {
